@@ -1,13 +1,11 @@
 import org.opencv.core.{Core, Scalar, _}
-import org.opencv.features2d.ORB
+import org.opencv.features2d.{BOWImgDescriptorExtractor, FastFeatureDetector, ORB}
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.opencv.highgui.HighGui
 import org.opencv.videoio.{VideoCapture, Videoio}
 
 import scala.collection.JavaConverters._
-
-
 
 
 class LogoDetector(
@@ -21,11 +19,15 @@ class LogoDetector(
   private val fps: Double = capture.get(Videoio.CAP_PROP_FPS)
   private val windowSize: Int = (fps * 5 / 6).toInt / (skipFrames + 1)
   private val frameNumber: Int = math.min(capture.get(Videoio.CAP_PROP_FRAME_COUNT).toInt, frameToAnalyse) - windowSize - 1
-  private val luminanceThreshold: Int = (fps * 5 / 6).toInt * 1500
+  private val luminanceThreshold: Int = (fps * 5 / 6).toInt * 2000
   
   private val binSize = 256
-  private val threshold1 = 0.085
+  private val threshold1 = 0.080
   private val threshold2 = 15d
+  
+  private val orb = org.opencv.features2d.ORB.create(500)
+  
+  println(s"Luminance threshold is $luminanceThreshold")
   
   private def grayHistogram(mat: Mat): Mat = {
     val hist = new Mat(256, 1, CvType.CV_8UC1)
@@ -136,7 +138,7 @@ class LogoDetector(
     groupedFrames
   }
   
-  private def findLogosInVideo: Seq[Frame] = {
+  private def findPotentialLogo: Seq[Frame] = {
     println(s"Lum : $luminanceThreshold\t")
     
     println(s"Analysing $frameNumber frames")
@@ -185,11 +187,6 @@ class LogoDetector(
     
     capture.release()
     logos
-    /*val groupedLogos = groupFrames(logos)
-    
-    val foundLogos = groupedLogos.flatMap(_.lastOption)
-    foundLogos
-    */
   }
   
   private def clusterizeLogos(logos: Seq[Frame]): (Seq[Frame], Double) = {
@@ -242,7 +239,7 @@ class LogoDetector(
   
   private def findLogoTemplate(logoFrames: Seq[Frame]): (Frame, Double) = {
     println("searching logo template")
-    val res = logoFrames.map {logoA =>
+    val res = logoFrames.map { logoA =>
       val logoAhist = logoA.hist.getOrElse(grayHistogram(logoA.matrix))
       val logoAhistTot = 0.until(binSize).map(i => logoAhist.get(i, 0).sum).sum
       val logoDistances = logoFrames.foldLeft(0d) { (totalDist, logoB) =>
@@ -272,29 +269,138 @@ class LogoDetector(
         s"\tCond2 : ${clusterCenter - threshold2}" +
         s" \tTime :${(logoFrame.index/25/60).toInt}m ${(logoFrame.index/25%60).toInt}s " +
         s" \tDist: $distanceToTemplate\tC1:$cond1\tC2:$cond2\tC3:$cond3")
-      cond1 & cond2 & cond3
+      cond1 & true & true
     }
   }
-}
-
-object LogoDetector {
-  def apply(videoPath: String, frameToAnalyze: Int = Int.MaxValue) = {
-    val logoDetector = new LogoDetector(videoPath, frameToAnalyze)
-    val logos = logoDetector.findLogosInVideo
-    logoDetector.saveLogos(logos, "logos")
-    val (filteredLogos, clusterCenter) = logoDetector.clusterizeLogos(logos)
-    val (logoTemplate, distance) = logoDetector.findLogoTemplate(logos)
+  
+  
+  def findLogoInVideo(): Unit = {
+    val logos = findPotentialLogo
+    val (filteredLogos, clusterCenter) = clusterizeLogos(logos)
+    val (logoTemplate, distance) = findLogoTemplate(logos)
     println(s"Logo template at ${logoTemplate.index} " + s"\t${(logoTemplate.index/25/60).toInt}m ${(logoTemplate.index/25%60).toInt}")
     Imgcodecs.imwrite(videoPath + "_templ.jpg", logoTemplate.matrix)
-    val matchedLogos = logoDetector.matchLogosToTemplate(logos, logoTemplate, clusterCenter)
+    val matchedLogos = matchLogosToTemplate(logos, logoTemplate, clusterCenter)
     matchedLogos.foreach{l =>
       println("Logos at " + l.index + s"\t${(l.index/25/60).toInt}m ${(l.index/25%60).toInt}s")
     }
-    logoDetector.findReplay(matchedLogos).foreach{replay =>
+    findReplay(matchedLogos).foreach{replay =>
       val begin = replay.begin / 25
       val end = replay.end / 25
       println(s"Replay between ${(begin/60).toInt}m ${(begin%60).toInt}s and ${(end/60).toInt}m ${(end%60).toInt}s")
     }
+  }
+  
+  
+  private def index2frame(idxs: Seq[Int]): Seq[Frame] = {
+    val frames = idxs.map{idx =>
+      val frame = new Mat()
+      capture.set(Videoio.CAP_PROP_POS_FRAMES, idx)
+      capture.read(frame)
+      Imgproc.resize(frame, frame, new Size(width, height))
+      Frame(idx, frame)
+    }
+    frames
+  }
+  
+  private def index2frameWindow(idxs: Seq[Int]): Seq[Seq[Frame]] = {
+    val frames = idxs.map{idx =>
+      val firstFrame = idx - windowSize
+      capture.set(Videoio.CAP_PROP_POS_FRAMES, idx)
+      (firstFrame until idx).map {id =>
+        val frame = new Mat()
+        capture.read(frame)
+        Imgproc.resize(frame, frame, new Size(width, height))
+        Imgproc.resize(frame, frame, new Size(width, height))
+        Frame(id, frame)
+      }
+    }
+    frames
+  }
+  
+  private def frame2orb(frame: Frame) = {
+    val kp = new MatOfKeyPoint()
+    val desc = new Mat()
+    orb.detect(frame.matrix, kp)
+    orb.compute(frame.matrix, kp, desc)
+    frame.copy(orbResult = Some(desc))
+  }
+  
+  private def clusterizeFrames(frames: Seq[Frame], k: Int)= {
+    val labels = new Mat()
+    val centers = new Mat()
+    val criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 100, 0.1)
+
+    val disc = frames.flatMap {logo =>
+      logo.orbResult
+    }
+    
+    val colsLen = frames.head.orbResult.get.cols()
+    val s = new Mat(frames.size, colsLen, CvType.CV_32F)
+    val sample = new Mat()
+    s.convertTo(sample, CvType.CV_32F)
+  
+    disc.foreach { d =>
+      val row = new Mat()
+      d.convertTo(row, CvType.CV_32F)
+      sample.push_back(row)
+    }
+    println("Sorting " + frames.size + " frames")
+    Core.kmeans(sample, k, labels, criteria, 3, Core.KMEANS_PP_CENTERS, centers)
+    val indexedLabel = disc.indices.map {idx =>
+      val predLabel = labels.get(idx, 0).head.toInt
+      predLabel
+    }
+    
+    frames.zip(indexedLabel).foreach {case (frame, l) =>
+        println(s"${frame.index}\t$l")
+    }
+  }
+  
+  def findLogoInVideo(frameIdxs: Seq[Int]) = {
+    val potentialLogos = index2frame(frameIdxs)
+    val orbResult = potentialLogos.map(frame2orb)
+    val cluster = clusterizeFrames(orbResult, 3)
+  }
+  
+  /*
+  def findLogoInVideo(frameIdxs: Seq[Int]): Unit = {
+    val potentialLogos = index2frameWindow(frameIdxs).flatMap { window =>
+      val mats = window.map(_.matrix).toList
+      val lumi = accumulatedDiff(mats)
+      if (lumi > luminanceThreshold) {
+        println(s"${window.last.index} is a potential logo (lumi : $lumi)")
+        Some(Frame(window.last.index, mats.last))
+      }
+      else None
+    }
+    //val potentialLogos = index2frame(frameIdxs)
+    val (filteredLogos, clusterCenter) = clusterizeLogos(potentialLogos)
+    val (logoTemplate, distance) = findLogoTemplate(filteredLogos)
+    println(s"Logo template at ${logoTemplate.index} " + s"\t${(logoTemplate.index/25/60).toInt}m ${(logoTemplate.index/25%60).toInt}")
+    Imgcodecs.imwrite(videoPath + "_templ.jpg", logoTemplate.matrix)
+    val matchedLogos = matchLogosToTemplate(potentialLogos, logoTemplate, clusterCenter)
+    matchedLogos.foreach{l =>
+      println("Logos at " + l.index + s"\t${(l.index/25/60).toInt}m ${(l.index/25%60).toInt}s")
+    }
+    findReplay(matchedLogos).foreach{replay =>
+      val begin = replay.begin / 25
+      val end = replay.end / 25
+      println(s"Replay between ${(begin/60).toInt}m ${(begin%60).toInt}s and ${(end/60).toInt}m ${(end%60).toInt}s")
+    }
+  }
+  */
+}
+
+object LogoDetector {
+  def apply(videoPath: String, frameToAnalyze: Int = Int.MaxValue): Unit = {
+    val logoDetector = new LogoDetector(videoPath, frameToAnalyze)
+    logoDetector.findLogoInVideo()
+  }
+  
+  def apply(videoPath: String, keyframe: Seq[Int]): Unit = {
+    val logoDetector = new LogoDetector(videoPath)
+    logoDetector.findLogoInVideo(keyframe)
   }
 }
 
