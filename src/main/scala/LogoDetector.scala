@@ -1,3 +1,4 @@
+/*
 import org.opencv.core.{Core, Scalar, _}
 import org.opencv.features2d.{BOWImgDescriptorExtractor, FastFeatureDetector, ORB}
 import org.opencv.imgcodecs.Imgcodecs
@@ -409,30 +410,4 @@ object LogoDetector {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*/
