@@ -12,7 +12,7 @@ import org.bytedeco.javacpp.opencv_core._
 
 
 
-trait ReplayDetector { _: VideoModule =>
+class ReplayDetector(capture: VideoCapture) extends VideoModule {
 
   import OpenCvUtils._
   
@@ -21,12 +21,13 @@ trait ReplayDetector { _: VideoModule =>
   // logo detection parameters
   private val mosaicBorderSize = 2
   private val (mosaicWidth, mosaicHeight) = (0.81 * videoWidth + mosaicBorderSize * 2, 0.81 * videoHeight + mosaicBorderSize * 2) // todo : check  "+ mosaicBorderSize * 2"
-  private val saveWindowSize = math.max(fps.toInt / 3, 10)
+  private val saveWindowSize = 1 // should be a multiple of 2
+  private val numberOfWindow = 10
   
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
   private val minLogoSegmentLength = mosaicHeight / 4
-  private val logoThreshold = saveWindowSize * 1000
+  private val logoThreshold = saveWindowSize * 1500
   
   println(s"Save window size : $saveWindowSize")
   println("Logo threshold : " + logoThreshold)
@@ -130,7 +131,9 @@ trait ReplayDetector { _: VideoModule =>
     res
   }
   
-  
+
+  // finds the logo against our database of known logo (inside the known_logo folder)
+  // todo : do not make the known_logo folder hard coded
   def matchKnownLogo(shotIdxs: Seq[Int]) = {
     var videoTag: Option[String] = None
     val logoFolder = new java.io.File("known_logo/")
@@ -263,71 +266,75 @@ trait ReplayDetector { _: VideoModule =>
     def writeShotMosaic(shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat]) = {
 
       // first, we save the frames in the window before the shot transition
-      capture.set(CAP_PROP_POS_FRAMES, shotIdx - saveWindowSize)
-      // all the border detected in the frames
-      val edges: Seq[Mat] = (0 until saveWindowSize * 2).map { i =>
-        val frame: Mat = new Mat()
-        capture.read(frame)
-        val resized = new Mat()
-        resize(frame, resized, new Size(videoWidth, videoHeight))
-        val cropped: Mat = cropImage(resized)
+      for (window <- (0 to numberOfWindow)) {
+        val framePosition = shotIdx - ((saveWindowSize * (numberOfWindow - window)) /2 )// half of the frame in the window are behind the current index
+        capture.set(CAP_PROP_POS_FRAMES, framePosition)
+        // all the border detected in the frames
+        val edges: Seq[Mat] = (0 until saveWindowSize).map { i =>
+          val frame: Mat = new Mat()
+          capture.read(frame)
+          val resized = new Mat()
+          resize(frame, resized, new Size(videoWidth, videoHeight))
+          val cropped: Mat = cropImage(resized)
 
-        val contours = makeCountoursFrame(cropped, minLogoSegmentLength)
-        val edgedWithRemovedBackground = new Mat()
-        contours.copyTo(edgedWithRemovedBackground)
-        backgroundFrames.foreach{bg =>
-          subtract(edgedWithRemovedBackground, bg, edgedWithRemovedBackground)
+          val contours = makeCountoursFrame(cropped, minLogoSegmentLength)
+          val edgedWithRemovedBackground = new Mat()
+          contours.copyTo(edgedWithRemovedBackground)
+          backgroundFrames.foreach{bg =>
+            subtract(edgedWithRemovedBackground, bg, edgedWithRemovedBackground)
+          }
+
+          copyMakeBorder(edgedWithRemovedBackground, edgedWithRemovedBackground, mosaicBorderSize,mosaicBorderSize,mosaicBorderSize,mosaicBorderSize, BORDER_CONSTANT, new Scalar(0.0))
+
+          cropped.release()
+          frame.release()
+          contours.release()
+          resized.release()
+
+          edgedWithRemovedBackground
         }
-
-        copyMakeBorder(edgedWithRemovedBackground, edgedWithRemovedBackground, mosaicBorderSize,mosaicBorderSize,mosaicBorderSize,mosaicBorderSize, BORDER_CONSTANT, new Scalar(0.0))
-
-        cropped.release()
-        frame.release()
-        contours.release()
-        resized.release()
-
-        edgedWithRemovedBackground
-      }
-      val shiftEdgesFrame = new Mat()
-      val normalEdgesFrame = new Mat()
-      val shiftEdges = (0 until saveWindowSize * 2).map { i =>
-        val shiftEdge = new Mat()
-        val edge = edges.indices.map { j =>
-          edges( (i + j) % edges.size)
+        val shiftEdgesFrame = new Mat()
+        val normalEdgesFrame = new Mat()
+        val shiftEdges = (0 until saveWindowSize).map { i =>
+          val shiftEdge = new Mat()
+          val edge = edges.indices.map { j =>
+            edges( (i + j) % edges.size)
+          }
+          hconcat(new MatVector(edge:_*), shiftEdge)
+          shiftEdge
         }
-        hconcat(new MatVector(edge:_*), shiftEdge)
-        shiftEdge
-      }
-      val normalEdges = (0 until saveWindowSize * 2 ).map { i =>
-        val normalEdge = new Mat()
-        hconcat(new MatVector(edges:_*), normalEdge)
-        normalEdge
-      }
-      vconcat(new MatVector(shiftEdges:_*), shiftEdgesFrame)
-      vconcat(new MatVector(normalEdges:_*), normalEdgesFrame)
+        val normalEdges = (0 until saveWindowSize).map { i =>
+          val normalEdge = new Mat()
+          hconcat(new MatVector(edges:_*), normalEdge)
+          normalEdge
+        }
+        vconcat(new MatVector(shiftEdges:_*), shiftEdgesFrame)
+        vconcat(new MatVector(normalEdges:_*), normalEdgesFrame)
 
-      // TODO : re enable this
-      /*
-      val parameters = new IntBuffer(
-        IMWRITE_PNG_BILEVEL, 1
-      )
-      */
-      imwrite(shotFolder + shotIdx + "A.png", shiftEdgesFrame/*, parameters*/)
-      imwrite(shotFolder + shotIdx + "B.png", normalEdgesFrame/*, parameters*/)
-      shiftEdgesFrame.release()
-      normalEdgesFrame.release()
-      //parameters.release()
-      edges.foreach(_.release())
-      normalEdges.foreach(_.release())
-      shiftEdges.foreach(_.release())
+        // TODO : re enable this
+        /*
+        val parameters = new IntBuffer(
+          IMWRITE_PNG_BILEVEL, 1
+        )
+        */
+        imwrite(shotFolder + framePosition + "A.png", shiftEdgesFrame/*, parameters*/)
+        imwrite(shotFolder + framePosition + "B.png", normalEdgesFrame/*, parameters*/)
+        shiftEdgesFrame.release()
+        normalEdgesFrame.release()
+        //parameters.release()
+        edges.foreach(_.release())
+        normalEdges.foreach(_.release())
+        shiftEdges.foreach(_.release())
+      }
+
       backgroundFrames.foreach(_.release())
     }
-    
+
     var previousShotIdx = 0
     val backgroundSize = 1
-    
+
     for {(shotIdx, i) <- shotIdxs.zipWithIndex} {
-      
+
       val nextBackgroundFrames = shotIdxs.lift(i+1).toVector.flatMap{nextShotIdx =>
         // We remove from the current frame the frames in the middle of the current shot and of the next shot
         // We need to make sure that we don't take frames outside of the next shot (hence the min)
@@ -337,10 +344,10 @@ trait ReplayDetector { _: VideoModule =>
         val nextBackgroundFrames = makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize)
           //if (shotIdx + fps > nextFrameBackgroundIdx) Vector.empty[Mat] // make sure that we don't go the next shot
           //else makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize)
-          
+
         nextBackgroundFrames
       }
-    
+
       // We remove from the current frame the frames in the middle of the current shot and of the previous shot
       // We need to make sure that we don't take frames outside of the previous shot (hence the max)
       // or frame that could be logo frame (hence the - fps, because a logo roughly last for 1 second)
@@ -349,11 +356,11 @@ trait ReplayDetector { _: VideoModule =>
       val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
         if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat]
         else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
-      
+
       writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames) // todo : reenable nextBGframes
-      
+
       previousShotIdx = shotIdx
-      
+
       //nextBackgroundFrames.foreach(_.release())
       previousBackgroundFrames.foreach(_.release())
     }

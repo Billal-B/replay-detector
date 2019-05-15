@@ -8,6 +8,9 @@ import org.bytedeco.javacpp.opencv_imgproc._
 import org.bytedeco.javacpp.opencv_core._
 import org.bytedeco.javacpp.opencv_videoio.VideoCapture
 
+import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
+
 object OpenCvUtils {
   
   /*
@@ -149,16 +152,24 @@ object OpenCvUtils {
 * Doesn't release the img matrix.
 * */
   def makeCountoursFrame(img: Mat, minContourLength: Double = 0.0): Mat = {
-    val edges = doCannyEdgeDetection(img)
-    val hierarchy = new Mat()
-    val contoursFrame = Mat.zeros(img.size(), CV_8U).asMat()
-    val contours = new MatVector(findContours(edges).get().filter {contour => arcLength(contour, false) > minContourLength}:_*)
-    drawContours(contoursFrame, contours, -1, new Scalar(255.0))
-    threshold(contoursFrame, contoursFrame, 75d, 255d, THRESH_BINARY)
-    contours.get().foreach(_.release())
-    hierarchy.release()
-    edges.release()
-    contoursFrame
+    Try {
+      val edges = doCannyEdgeDetection(img)
+      val hierarchy = new Mat()
+      val contoursFrame = Mat.zeros(img.size(), CV_8U).asMat()
+      val contours = new MatVector(findContours(edges).get().filter { contour => arcLength(contour, false) > minContourLength }: _*)
+      drawContours(contoursFrame, contours, -1, new Scalar(255.0))
+      threshold(contoursFrame, contoursFrame, 75d, 255d, THRESH_BINARY)
+      contours.get().foreach(_.release())
+      hierarchy.release()
+      edges.release()
+      contoursFrame
+    } match {
+      case Success(m: Mat) =>
+        m
+      case Failure(ex) =>
+        ex.printStackTrace()
+        throw new Exception("Error while drawing countours")
+    }
   }
   
   

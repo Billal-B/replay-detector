@@ -8,7 +8,7 @@ import org.bytedeco.javacpp.opencv_videoio._
 /*
 * Handles the segmentation of videos into shots
 * */
-trait ShotDetector { this: VideoModule =>
+class ShotDetector(capture: VideoCapture) extends VideoModule {
   import OpenCvUtils._
   import ShotDetector._
 
@@ -85,16 +85,19 @@ trait ShotDetector { this: VideoModule =>
       frame.release()
       hist
     }
-    
+
+    val _videoWidth = videoWidth
+    val _videoHeight = videoHeight
+    val _startFrame = startFrame
     var time = System.currentTimeMillis()
     val windows = collection.mutable.ListBuffer(TransitionFrame(windowSize + frameNumber - 1, computeRankTracing(histWindow)))
     
     for (i <- 0 until frameNumber - windowSize) {
-      if (i % 500 == 0 & i != 0) println("Processed " + i + "\tTime : " + ((System.currentTimeMillis() - time) / 1000).toInt)
+      if (i % 50000 == 0 & i != 0) println("Processed " + i + "\tTime : " + ((System.currentTimeMillis() - time) / 1000).toInt)
       val frame = new Mat()
       capture.read(frame)
       val resized = new Mat()
-      resize(frame, resized, new Size(videoWidth, videoHeight))
+      resize(frame, resized, new Size(_videoWidth, _videoHeight))
       
       val currentHist = getHSVhistogram(resized)
       histWindow.head._1.release()
@@ -105,7 +108,7 @@ trait ShotDetector { this: VideoModule =>
 
       frame.release()
       resized.release()
-      windows.+=:(TransitionFrame(i + startFrame, rankTracing))
+      windows.+=:(TransitionFrame(i + _startFrame, rankTracing))
     }
     windows.toVector
   }
