@@ -28,7 +28,7 @@ object OpenCvUtils {
     contours
   }
 
-  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String): Unit = {
+  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String, info: Option[String] = None): Unit = {
     // creating the folder
     if (! new File(folder).exists()) {
       new File(folder).mkdir()
@@ -37,7 +37,7 @@ object OpenCvUtils {
       val frame = new Mat()
       capture.set(CAP_PROP_POS_FRAMES, idx)
       capture.read(frame)
-      imwrite(folder + idx + ".png", frame)
+      imwrite(folder + info.getOrElse("") + "_" + idx + ".png", frame)
     }
   }
   

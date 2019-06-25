@@ -1,6 +1,7 @@
 import java.io.{BufferedWriter, File, FileWriter}
 import java.nio.IntBuffer
 
+import scala.collection.JavaConverters._
 import org.bytedeco.javacpp.indexer.IntIndexer
 import org.bytedeco.javacpp.opencv_videoio.VideoCapture
 
@@ -21,13 +22,13 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
   // logo detection parameters
   private val mosaicBorderSize = 2
   private val (mosaicWidth, mosaicHeight) = (0.81 * videoWidth + mosaicBorderSize * 2, 0.81 * videoHeight + mosaicBorderSize * 2) // todo : check  "+ mosaicBorderSize * 2"
-  private val saveWindowSize = 1 // should be a multiple of 2
-  private val numberOfWindow = 10
+
   
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
   private val minLogoSegmentLength = mosaicHeight / 4
-  private val logoThreshold = saveWindowSize * 1500
+  private val logoThreshold = saveWindowSize * 1000
+  private val knownLogoThreshold = 2
   
   println(s"Save window size : $saveWindowSize")
   println("Logo threshold : " + logoThreshold)
@@ -138,35 +139,35 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
     var videoTag: Option[String] = None
     val logoFolder = new java.io.File("known_logo/")
     val possibleLogoFrames = collection.mutable.Set.empty[Logo]
-    val sortedShots = shotIdxs.sorted
-    for (shotIdx <- sortedShots) {
-      val shotFile = shotIdx + "A.png"
-      val shot = imread("shot/" + shotFile, IMREAD_UNCHANGED)
+    val shotsImg = new java.io.File("shot/A/").listFiles().toVector
+    for (shotImg <- shotsImg) {
+      val shot = imread(shotImg.getCanonicalPath, IMREAD_UNCHANGED)
+      val shotIdx = shotImg.getName.split("\\.")(0).toInt
       
       videoTag match {
         case Some(tag) =>
-          var found = 0 // need to find at least 2 matches
-            for (logoFile <- new java.io.File(logoFolder.getPath + "/" + tag + "/").listFiles() if found < 2) {
+          var found = 0
+            for (logoFile <- new java.io.File(logoFolder.getPath + "/" + tag + "/").listFiles() if found < knownLogoThreshold) {
               val logoShot = imread(logoFile.getPath, IMREAD_UNCHANGED)
               val res = contourDiff(shot, logoShot)
               if (res > logoThreshold) {
                 found += 1
                 println(shotIdx + " matches with " + logoFile.getName + " by " + res)
-                possibleLogoFrames += Logo(shotIdx, logoFile.getName.split("B")(0).toInt, res.toInt, Some(tag))
+                if (found >= knownLogoThreshold) possibleLogoFrames += Logo(shotIdx, logoFile.getName.split("\\.")(0).toInt, res.toInt, Some(tag))
               }
               logoShot.release()
             }
-          if (found < 2) videoTag = None // if we didn't found two match, the tag is reset
+          //if (found < knownLogoThreshold) videoTag = None // if we didn't found two match, the tag is reset TODO : remove this reset
         case None =>
-          for (logoTag <- logoFolder.listFiles()) {
-            for (logoFile <- logoTag.listFiles()) {
+          for (logoTag <- logoFolder.listFiles() if videoTag.isEmpty) {
+            for (logoFile <- logoTag.listFiles() if videoTag.isEmpty) {
               val logoShot = imread(logoFile.getPath, IMREAD_UNCHANGED)
               val res = contourDiff(shot, logoShot)
               if (res > logoThreshold) {
                 println("************** VIDEO TAG : " + logoTag.getName)
                 videoTag = Some(logoTag.getName)
-                println(shotIdx + " matches with " + logoFile.getPath + " by " + res)
-                possibleLogoFrames += Logo(shotIdx, logoFile.getName.split("B")(0).toInt, res.toInt, Some(logoTag.getName))
+                println(shotIdx + " matches with NONE TAG " + logoFile.getPath + " by " + res)
+                possibleLogoFrames += Logo(shotIdx, logoFile.getName.split("\\.")(0).toInt, res.toInt, Some(logoTag.getName))
               }
               logoShot.release()
             }
@@ -219,11 +220,11 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
     val possibleLogoFrames = collection.mutable.Set.empty[Logo]
     val sortedShots = shotIdxs.sorted
     for (shotAIdx <- sortedShots) {
-      val shotAFile = shotAIdx + "A.png"
-      val shotA = imread("shot/" + shotAFile, IMREAD_UNCHANGED)
+      val shotAFile = shotAIdx + ".png"
+      val shotA = imread("shot/A/" + shotAFile, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
       for (shotBIdx <- sortedShots if shotBIdx - shotAIdx >= fps * 2 & shotBIdx - shotAIdx < fps * 90) {
-        val shotBFile = shotBIdx + "B.png"
-        val shotB = imread("shot/" + shotBFile, IMREAD_UNCHANGED)
+        val shotBFile = shotBIdx + ".png"
+        val shotB = imread("shot/B/" + shotBFile, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
         val res = contourDiff(shotA, shotB, shotAIdx + "_" + shotBIdx)
         if (res > logoThreshold) {
           println(shotAIdx + " matches with " + shotBIdx + " by " + res)
@@ -264,10 +265,9 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
     // backgroundFrame must be of dimension mosaicWidth * mosaicHeight
     // todo : check the release here
     def writeShotMosaic(shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat]) = {
-
       // first, we save the frames in the window before the shot transition
-      for (window <- (0 to numberOfWindow)) {
-        val framePosition = shotIdx - ((saveWindowSize * (numberOfWindow - window)) /2 )// half of the frame in the window are behind the current index
+
+        val framePosition = shotIdx - saveWindowSize // half of the frame in the window are behind the current index
         capture.set(CAP_PROP_POS_FRAMES, framePosition)
         // all the border detected in the frames
         val edges: Seq[Mat] = (0 until saveWindowSize).map { i =>
@@ -317,15 +317,14 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
           IMWRITE_PNG_BILEVEL, 1
         )
         */
-        imwrite(shotFolder + framePosition + "A.png", shiftEdgesFrame/*, parameters*/)
-        imwrite(shotFolder + framePosition + "B.png", normalEdgesFrame/*, parameters*/)
+        imwrite(shotFolder + "A/" + framePosition + ".png", shiftEdgesFrame/*, parameters*/)
+        imwrite(shotFolder + "B/" + framePosition + ".png", normalEdgesFrame/*, parameters*/) // todo: remove this in 'prod'
         shiftEdgesFrame.release()
         normalEdgesFrame.release()
         //parameters.release()
         edges.foreach(_.release())
         normalEdges.foreach(_.release())
         shiftEdges.foreach(_.release())
-      }
 
       backgroundFrames.foreach(_.release())
     }
@@ -333,36 +332,32 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
     var previousShotIdx = 0
     val backgroundSize = 1
 
-    for {(shotIdx, i) <- shotIdxs.zipWithIndex} {
-
-      val nextBackgroundFrames = shotIdxs.lift(i+1).toVector.flatMap{nextShotIdx =>
-        // We remove from the current frame the frames in the middle of the current shot and of the next shot
-        // We need to make sure that we don't take frames outside of the next shot (hence the min)
-        // or frame that could be logo frame (hence the + fps, because a logo roughly last for 1 second)
-        //val nextFrameBackgroundIdx = ((shotIdx + nextShotIdx) / 2).toInt
-        val nextFrameBackgroundIdx = shotIdx + (fps * 2 / 3).toInt
-        val nextBackgroundFrames = makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize)
-          //if (shotIdx + fps > nextFrameBackgroundIdx) Vector.empty[Mat] // make sure that we don't go the next shot
+    for {(_shotIdx, i) <- shotIdxs.zipWithIndex} {
+      for (shotIdx <- (0 to numberOfWindow).map(_ + _shotIdx)) {
+        val nextBackgroundFrames = shotIdxs.lift(i + 1).toVector.flatMap { nextShotIdx => // We remove from the current frame the frames in the middle of the current shot and of the next shot
+          // We need to make sure that we don't take frames outside of the next shot (hence the min)
+          // or frame that could be logo frame (hence the + fps, because a logo roughly last for 1 second)
+          //val nextFrameBackgroundIdx = ((shotIdx + nextShotIdx) / 2).toInt
+          val nextFrameBackgroundIdx = shotIdx + (fps * 2 / 3).toInt
+          val nextBackgroundFrames = makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize) //if (shotIdx + fps > nextFrameBackgroundIdx) Vector.empty[Mat] // make sure that we don't go the next shot
           //else makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize)
+          nextBackgroundFrames
+        }
 
-        nextBackgroundFrames
+        // We remove from the current frame the frames in the middle of the current shot and of the previous shot
+        // We need to make sure that we don't take frames outside of the previous shot (hence the max)
+        // or frame that could be logo frame (hence the - fps, because a logo roughly last for 1 second)
+        //val previousBackgroundFrameIndex = ((shotIdx - fps + previousShotIdx) / 2).toInt
+        val previousBackgroundFrameIndex = shotIdx - (fps * 2 / 3).toInt - backgroundSize
+        val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
+        if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat] else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
+
+        writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames) // todo : reenable nextBGframes
+        previousShotIdx = shotIdx
+
+        //nextBackgroundFrames.foreach(_.release())
+        previousBackgroundFrames.foreach(_.release())
       }
-
-      // We remove from the current frame the frames in the middle of the current shot and of the previous shot
-      // We need to make sure that we don't take frames outside of the previous shot (hence the max)
-      // or frame that could be logo frame (hence the - fps, because a logo roughly last for 1 second)
-      //val previousBackgroundFrameIndex = ((shotIdx - fps + previousShotIdx) / 2).toInt
-      val previousBackgroundFrameIndex = shotIdx - (fps * 2 / 3).toInt - backgroundSize
-      val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
-        if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat]
-        else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
-
-      writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames) // todo : reenable nextBGframes
-
-      previousShotIdx = shotIdx
-
-      //nextBackgroundFrames.foreach(_.release())
-      previousBackgroundFrames.foreach(_.release())
     }
   }
 }

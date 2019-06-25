@@ -1,5 +1,7 @@
 import java.io.File
 import java.nio.file.{Files, Paths}
+import java.sql.Timestamp
+import java.util.UUID
 
 import com.amazonaws.services.s3.{AmazonS3Client, AmazonS3ClientBuilder}
 import org.bytedeco.javacpp.opencv_videoio.VideoCapture
@@ -15,34 +17,56 @@ case class Replay(begin : Int, end: Int)
 
 
 trait VideoModule {
-  def filename = "video/Full Match FC Barcelona vs Valencia CF LaLiga 2017_2018-h1OJFu9dmJA.mkv"
-  def frameToAnalyse: Int = 10000
+  def videoName = "video.mp4"
+  def frameToAnalyse: Int = Int.MaxValue
   def startFrame: Int = 0
   def videoWidth: Int = 100
   def videoHeight: Int = 100
+  def knownLogo: Boolean = true // todo : move this (conf module)
+  def saveWindowSize = 1 // should be a multiple of 2
+  def numberOfWindow = 10
+
+  def runId:String = new Timestamp(System.currentTimeMillis())
+    .toString
+    .replaceAll("\\s", "")
+    .replaceAll("""([\p{Punct}&&[^.$]]|\b\p{IsLetter}{1,2}\b)\s*""", "")
+    .dropRight(4)
+    .replaceAll("\\s", "")
+    .trim
   // def findShot: Vector[Int]
 }
 
-object Main extends App with VideoModule {
+object Main extends VideoModule {
 
   val uploadToS3 = false
-  val knownLogo = false
 
-  replayDetection()
-  if (uploadToS3) uploadLogosToS3()
+  def main(args: Array[String]) = {
+    setup()
+    val filename = args.headOption getOrElse videoName
+    replayDetection(filename)
+    if (uploadToS3) {
+      uploadLogosToS3()
+      uploadKnownLogoToS3()
+    }
+  }
 
   // ensure every folder exists, also clean the shot folder
   def setup(): Unit = {
     val frameFolder = new File("frame")
     val knownLogoFolder = new File("known_logo")
     val shotFolder = new File("shot")
+    val shotAFolder = new File("shot/A")
+    val shotBFolder = new File("shot/B")
     if (! frameFolder.exists() || ! frameFolder.isDirectory) frameFolder.mkdirs()
     if (! knownLogoFolder.exists() || ! knownLogoFolder.isDirectory) knownLogoFolder.mkdirs()
     if (! shotFolder.exists() || ! shotFolder.isDirectory) {
       shotFolder.mkdirs()
+      shotAFolder.mkdirs()
+      shotBFolder.mkdirs()
     } else {
-      shotFolder.delete()
-      shotFolder.mkdir()
+      org.apache.commons.io.FileUtils.cleanDirectory(shotFolder)
+      shotAFolder.mkdirs()
+      shotBFolder.mkdirs()
     }
   }
 
@@ -54,7 +78,14 @@ object Main extends App with VideoModule {
     }
   }
 
-  def replayDetection() = {
+  def uploadKnownLogoToS3() = {
+    val logoFolder = new File("./known_logo").listFiles().map{tag =>
+      val imgs = new File(tag.getCanonicalPath).listFiles().map(_.getAbsolutePath)
+      AWSUtils.uploadToS3(imgs, "bb-replay-detector-known-logos", tag.getName)
+    }
+  }
+
+  def replayDetection(filename: String) = {
     val capture: VideoCapture = new VideoCapture(filename)
     val fps: Double = capture.get(CAP_PROP_FPS)
     val t = System.currentTimeMillis()
@@ -89,9 +120,15 @@ object Main extends App with VideoModule {
     }
 
     println("Saving " + logos.length + " logo frames")
-    val logoIdx = (logos.map(_.index) ++ logos.map(_.matches)).distinct
-    val videoTag = Try{logos.groupBy(_.tag).mapValues(_.length).max}.toOption.flatMap(_._1)
-    OpenCvUtils.saveFrames(capture, logoIdx, "frame/" + videoTag.getOrElse("unk") + "/")
+
+    logos
+      .groupBy(_.tag)
+      .foreach{case (optTag, logos) =>
+        val logosToSave =
+          if (knownLogo) logos.map(_.index)
+          else logos.flatMap(l => Vector(l.index, l.matches))
+        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId))
+      }
 
     println("Time total : " + (System.currentTimeMillis() - t))
 
