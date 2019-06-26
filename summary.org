@@ -342,7 +342,7 @@ Cette architecture est scalaire; ceci nous a permi de scrapper plusieurs vidéos
 - Dataset logo
 - Dataset logo séparé en fonction du logo (ligue 1, premier league, ...)
 
-** sss
+** 
 
 ** Détection des frames logo
 *** Propre modèle
