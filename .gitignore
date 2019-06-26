@@ -1,6 +1,7 @@
 .bloop
 .history
 .idea
+.metals
 target
 project/target
 known_logo

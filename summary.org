@@ -326,6 +326,18 @@ Les limitations de notre méthode sont les suivantes :
 
 
 * Deuxième partie : Détection avec deep learning
+
+** Etat de l'art
+*** Two-Stream Convolutional Networks for Action Recognition in Videos
+*** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
+- ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
+-- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
+Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
+-- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
+Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un
+problème important à considérer.
+
+
 ** Scrapping
 L'approche par matching de contours convient tout à fait à la tâche de scrapping.
 En effet, elle est :
@@ -342,7 +354,6 @@ Cette architecture est scalaire; ceci nous a permi de scrapper plusieurs vidéos
 - Dataset logo
 - Dataset logo séparé en fonction du logo (ligue 1, premier league, ...)
 
-** 
 
 ** Détection des frames logo
 *** Propre modèle
