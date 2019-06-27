@@ -328,7 +328,27 @@ Les limitations de notre méthode sont les suivantes :
 * Deuxième partie : Détection avec deep learning
 
 ** Etat de l'art
+Nous nous intéressons à l'état de l'art concernant la détection d'action
+dans les vidéos. En effet, la transition d'un logo s'effectue sur plusieurs 
+frames consécutives; il y a donc une composante temporelle à notre recherche,
+et nous pouvons considérer la transition d'un logo comme une action.
 *** Two-Stream Convolutional Networks for Action Recognition in Videos
+Cet article est écrit par Karen Simonyan et Andrew Zisserman. Dans celui-ci,
+ils proposent de séparer la tâche de reconnaissance d'action dans les vidéos en 
+deux parties : une composante spatiale et une composante temporelle.
+La composante spatiale contient l'information concernant sur les objets dans
+la vidéo; tandis que la composante temporelle l'information sur les 
+déplacements de ces objets et de la caméra. 
+A partir de ces observations, les auteurs proposent d'entraîner un classifieur
+spatial (Spatial stream ConvNet) et un classifieur temporel (). Ces classifieurs
+sont des réseaux de neurones convolutifs profonds. 
+
+**** Classifieur spatial
+Ce réseau a une architecture de classifieur d'image classique. Il va permettre
+de donner un indice fort pour la prédiction, car certaines actions sont très 
+liées à certains objets.
+
+
 *** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
 - ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
 -- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
@@ -370,3 +390,6 @@ Frame :
 Shot : plan
 FPS : frame per second / image par seconde
 Cropper
+
+* Source
+Two-Stream Convolutional Networks for Action Recognition in Videos, Karen Simonyan Andrew Zisserman, 2014
