@@ -348,6 +348,26 @@ Ce réseau a une architecture de classifieur d'image classique. Il va permettre
 de donner un indice fort pour la prédiction, car certaines actions sont très 
 liées à certains objets.
 
+**** Classifieur temporel
+[[file:optical_flow.png]]
+Source : Two-Stream Convolutional Networks for Action Recognition in Videos, Figure 2
+L'innovation de l'article vient de l'introduction du classifieur temporel.
+L'idée est de détecter le mouvement des objets dans la vidéo, car un mouvement
+est la représentation d'un objet dans le temps.
+Les auteurs appellent leur approche "optical flow stacking".
+Dans celle-ci ils utilisent la méthode "optical flow" pour détecter
+le mouvement des objets entre des frames consécutives. 
+Ces mouvements vont être stockés dans des vecteurs et utilisés par le classifieur.
+Ils définissent aussi un hyperparamètre L qui définit la distance maximum entre deux frames
+pour laquel il faut calculer l'optical flow. Par exemple, si L=5, alors pour le 
+frame #50, il faudra calculer l'optical flow entre le frame #50 et le frame #51; entre
+#50 et #52; etc... jusqu'à #50 à #55.
+
+**** Méthode d'évalutation et résultats obtenus
+Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel
+est entraîné de zéro. Les dataset utilisés pour l'entraînement sont UCF-101 et
+HMDB-51, contenant à eux deux 13k vidéos. 
+**** 
 
 *** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
 - ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
