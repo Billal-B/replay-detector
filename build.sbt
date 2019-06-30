@@ -15,10 +15,5 @@ assemblyMergeStrategy in assembly := {
   case x => MergeStrategy.first
 }
 
-javaCppPresetLibs ++= Seq(
-  "ffmpeg" -> "3.2.1"
-)
-
-javaCppPresetLibs ++= Seq(
-  "videoinput" -> "0.200"
-)
+// https://mvnrepository.com/artifact/org.openpnp/opencv
+libraryDependencies += "org.openpnp" % "opencv" % "3.4.2-0"

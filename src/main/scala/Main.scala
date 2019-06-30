@@ -3,10 +3,10 @@ import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.amazonaws.services.s3.{AmazonS3Client, AmazonS3ClientBuilder}
-import org.bytedeco.javacpp.opencv_videoio.VideoCapture
-import org.bytedeco.javacpp.opencv_videoio._
-import org.bytedeco.javacpp.opencv_core._
+import org.opencv.videoio.VideoCapture
+import org.opencv.videoio.Videoio._
+import org.opencv.core.Mat
+import org.opencv.core.Core
 
 import scala.util.Try
 
@@ -41,6 +41,7 @@ object Main extends VideoModule {
   val uploadToS3 = true
 
   def main(args: Array[String]) = {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
     setup()
     val filename = args.headOption getOrElse videoName
     replayDetection(filename)
