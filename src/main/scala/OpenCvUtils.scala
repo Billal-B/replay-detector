@@ -156,6 +156,7 @@ object OpenCvUtils {
       val edges = doCannyEdgeDetection(img)
       val hierarchy = new Mat()
       val contoursFrame = Mat.zeros(img.size(), CV_8U).asMat()
+      var keptContours = new MatVector()
       val contours = new MatVector(findContours(edges).get().filter { contour => arcLength(contour, false) > minContourLength }: _*)
       drawContours(contoursFrame, contours, -1, new Scalar(255.0))
       threshold(contoursFrame, contoursFrame, 75d, 255d, THRESH_BINARY)

@@ -22,7 +22,7 @@ trait VideoModule {
   def startFrame: Int = 0
   def videoWidth: Int = 100
   def videoHeight: Int = 100
-  def knownLogo: Boolean = true // todo : move this (conf module)
+  def knownLogo: Boolean = false // todo : move this (conf module)
   def saveWindowSize = 1 // should be a multiple of 2
   def numberOfWindow = 10
 
@@ -38,7 +38,7 @@ trait VideoModule {
 
 object Main extends VideoModule {
 
-  val uploadToS3 = false
+  val uploadToS3 = true
 
   def main(args: Array[String]) = {
     setup()

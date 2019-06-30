@@ -15,7 +15,7 @@
 
 # SCRIPT OPTIONS
 
-OPENCV_VERSION='3.4.2'    # Version to be installed
+OPENCV_VERSION='4.0.2'    # Version to be installed
 # OPENCV_CONTRIB='NO'       # Install OpenCV's extra modules
 
 

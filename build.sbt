@@ -14,3 +14,11 @@ assemblyMergeStrategy in assembly := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
   case x => MergeStrategy.first
 }
+
+javaCppPresetLibs ++= Seq(
+  "ffmpeg" -> "3.2.1"
+)
+
+javaCppPresetLibs ++= Seq(
+  "videoinput" -> "0.200"
+)
