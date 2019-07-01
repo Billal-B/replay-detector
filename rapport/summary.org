@@ -1,9 +1,18 @@
 #+TITLE:Replay Detection
 
 
+
 * TODO : Problématique
-** Replay
-*** Pourquoi les replays
+Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
+Plus particulièrement, nous focalisons notre recherche sur des vidéos de sport tel que des matchs de football ou de basketball.
+Dans ces vidéos, notre objectif va être de parvenir à identifier les replays.
+
+** Description d'un replay
+Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.
+Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
+C'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, il est possible de voir un replay comme une annotation humaine sur une vidéo.
+
+** Caractéristique des replays
 *** Logo 
 
 * Objectif
@@ -364,18 +373,43 @@ frame #50, il faudra calculer l'optical flow entre le frame #50 et le frame #51;
 #50 et #52; etc... jusqu'à #50 à #55.
 
 **** Méthode d'évalutation et résultats obtenus
+[[file:two_stream_res.png]]
+Source : Table 4: Mean accuracy (over three splits) on UCF-101 and HMDB-51. 
 Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel
-est entraîné de zéro. Les dataset utilisés pour l'entraînement sont UCF-101 et
-HMDB-51, contenant à eux deux 13k vidéos. 
-**** 
+est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).
+Les dataset utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB-51,
+contenant à eux deux près de 20000 vidéos annotées.
+
+*Note* Pour calculer la classe d'un frame à l'instant t, les auteurs proposent
+deux méthodes :
+- fusion par la moyenne (by averaging) : y_t = y_t_spatial + y_t_temporal / 2
+- fusion par SVM (by SVM) : un SVM multiclasse linéaire est entrainé pour 
+prédire la classe à partir du softmax des scores L2-normalisés.
+
+Les résultats en *link table* montrent l'efficacité de leur méthode par rapport
+aux autres approches état de l'art.
+
+Nous pouvons voir que leur approche two-stream avec fusion SVM est la plus 
+efficace sur le dataset UCF-101, et qu'elle a aussi de bons résultats sur
+HMDB-51.
+
+Ce qui est le plus intéressant dans cet article, c'est l'amélioration
+qu'apporte l'ajout de la composante temporelle.
+En effet, le classifieur d'image simple (spatial) n'a que 73.0% (UCF-101) et 
+40.5% (HMBD-51), tandis que le classifieur qui prend en compte l'image et 
+la temporalité (two-stream model) atteint *88.0%* et 59.4%; ce qui 
+est une nette amélioration. Cet article nous a renforcé dans l'hypothèse
+qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'image 
+indépendante, mais comme une suite de séquence avec un lien au sein de 
+chaque séquence.
+Il semblerai que la temporalité a une très grande importance pour 
+l'analyse de vidéos.
 
 *** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
-- ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
--- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
-Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
--- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
-Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un
-problème important à considérer.
+ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
+- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos. Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
+- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
+Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un problème important à considérer.
 
 
 ** Scrapping
