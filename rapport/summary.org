@@ -4,16 +4,24 @@
 
 * TODO : Problématique
 Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
-Plus particulièrement, nous focalisons notre recherche sur des vidéos de sport tel que des matchs de football ou de basketball.
+Plus particulièrement, nous focalisons notre recherche sur des vidéos de football.
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays.
 
 ** Description d'un replay
 Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
-C'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, il est possible de voir un replay comme une annotation humaine sur une vidéo.
+En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, il est possible de voir un replay comme une annotation humaine sur une vidéo.
+Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
 
 ** Caractéristique des replays
-*** Logo 
+Les replays sont introduits et se terminent par un logo (Pan et al. *citation*).
+Ces logos ont en général une apparence qui se démarque facilement des autres images dans la vidéo.
+
+Les replays ne sont pas à confondre avec les ralentis. 
+Les ralentis sont un type particulier de replays où l'action est montrée de nouveau en /slow-motion/, 
+mais tous les replays ne sont pas des ralentis. 
+C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détecter l'effet de /slow-motion/) n'est pas un bon critère pour la détection de replay.
+
 
 * Objectif
 Nous voulons comparer l'efficacité des méthodes de vision par ordinateur "classique"
