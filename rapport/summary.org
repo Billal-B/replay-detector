@@ -1,6 +1,8 @@
 #+TITLE:Replay Detection
 
 
+* TODO
+replace Two-Stream Convolutional Networks for Action Recognition in Videos (etc) with reference like (ex [2])
 
 * TODO : Problématique
 Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
@@ -407,7 +409,21 @@ Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier 
 Il semblerai que la temporalité a une très grande importance pour  l'analyse de vidéos.
 
 *** Learning Spatiotemporal Features with 3D Convolutional Networks
-Dans cet article, Du Tran et. al proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos.
+Dans cet article, Du Tran et. al proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neuronnes profond.
+L'objectif est d'apprendre des caractéristiques qui soient :
+- générique : c'est à dire la capacité à representer différents types de vidéos
+- compact : afin de pouvoir stocker un grand nombre de ces caractéristiques
+- efficace (computationnellement): pour traiter les vidéos en temps réel
+- simple (à implémenter) : afin de fonctionner même avec les modèles simples (comme un classifieur linéaire)
+
+**** Apport de l'article
+[[file:3D_vs_2_stream.JPG]]
+Pour apprendre ces caractéristiques, l'entrée du réseau ne va pas être une image (2D), mais une séquence d'image (3D).
+C'est sur ce point que cette approche diffère de Two-Stream Convolutional Networks for Action Recognition in Videos.
+Pour prédire la classe d'un frame à l'instant t, il faut faire une fusion de la sortie du réseau spatial et du réseau temporel.
+De plus, l'apprentissage du réseau temporel est séparé de celui du réseau réseau spatial, ce qui ne permet pas au réseau de capturer l'information temporel relativement à l'information spatial.
+Même si le réseau temporel prend plusieurs frames en entrée (paramètre L > 1), la convolution 2D va écraser la composante temporelle.
+
 
 
 *** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
