@@ -1,20 +1,31 @@
 #+TITLE:Replay Detection
 
 
+
 * TODO : Problématique
-** Replay
-*** Pourquoi les replays
-*** Logo 
+Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
+Plus particulièrement, nous focalisons notre recherche sur des vidéos de football.
+Dans ces vidéos, notre objectif va être de parvenir à identifier les replays.
+
+** Description d'un replay
+Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.
+Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
+En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, il est possible de voir un replay comme une annotation humaine sur une vidéo.
+Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
+
+** Caractéristique des replays
+Les replays sont introduits et se terminent par un logo (Pan et al. *citation*).
+Ces logos ont en général une apparence qui se démarque facilement des autres images dans la vidéo.
+
+Les replays ne sont pas à confondre avec les ralentis. 
+Les ralentis sont un type particulier de replays où l'action est montrée de nouveau en /slow-motion/, mais tous les replays ne sont pas des ralentis.
+C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détecter l'effet de /slow-motion/) n'est pas un bon critère pour la détection de replay.
+
 
 * Objectif
-Nous voulons comparer l'efficacité des méthodes de vision par ordinateur "classique"
-aux méthodes par apprentissage profond (deep learning).
-L'objectif dans cette parti est double. Le premier est de détecter le plus efficacement les
-logos dans les vidéos afin d'avoir une *base line* à comparer avec l'approche par deep learning. 
-Le second est de mettre en place un système capable d'extraire les
-frames avec des logo, et ce sans intervention humaine (pas de labeling, pas d'ensemble d'entraînement
-à construire), afin de pouvoir constituer automatiquement un ensemble de données permettant d'entraîner
-des modèles de machine learning.
+Nous voulons comparer l'efficacité des méthodes de vision par ordinateur "classique" aux méthodes par apprentissage profond (deep learning).
+L'objectif dans cette parti est double. Le premier est de détecter le plus efficacement les logos dans les vidéos afin d'avoir une *base line* à comparer avec l'approche par deep learning.
+Le second est de mettre en place un système capable d'extraire les frames avec des logo, et ce sans intervention humaine (pas de labeling, pas d'ensemble d'entraînement à construire), afin de pouvoir constituer automatiquement un ensemble de données permettant d'entraîner des modèles de machine learning.
 
 
 * Première partir : Détection sans deep learning
@@ -25,38 +36,37 @@ Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est prés
 Tous les frames qui ont obtenu un score supérieur à un certain seuil sont considérés comme des "logo templates".
 
 *** Calcul du score de la luminance et filtrage des frames
-L'idée est de parcourir toute la vidéo et de calculer pour chaque frame
-la différence de luminance qu'il y a entre ce frame et les 17 frames précédents. 
+L'idée est de parcourir toute la vidéo et de calculer pour chaque frame la différence de luminance qu'il y a entre ce frame et les 17 frames précédents.
 Nous obtenons un score L_i pour chaque frame i dans la vidéo.
-Tous les frames dont le score est inférieur à un certain seuil sont écartés,
-les autres vont servir à trouver le logo template.
+Tous les frames dont le score est inférieur à un certain seuil sont écartés, les autres vont servir à trouver le logo template.
 
 *** Recherche du logo template parmis les frames filtrés
-Le logo template est le frame qui représente le mieux tous les logos dans la
-vidéo. Pour déterminer le logo template parmis les frames filtrés, l'algorithme
-K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la
-luminance moyenne des frames. Pour trouver le logo template, nous allons 
-chercher dans le cluster avec le centre de cluster le plus élevé, le frame m
-minimisant la distance avec tous les autres frames N du cluster. 
+Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.
+Pour déterminer le logo template parmis les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
+Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélection le frame m minimisant la distance avec tous les autres frames du cluster.
+[[file:robust_calc_dist.JPG]]
+Source : Xu, W., & Yi, Y. (2011). A Robust Replay Detection Algorithm for Soccer Video. IEEE Signal Processing Letters, 18(9). Equation (4)
 
 *** Recherche des logo
-Une fois que le logo template est déterminé, chaque logo trouvé en 1 va être 
-comparé avec le logo template. La mesure de comparaison est la distance qu'il 
-y a entre le frame et le template dans le cluster.
-Tous les frames qui ont une distance inférieure à un certain threshold sont 
-considérés comme des logos.
+Une fois que le logo template est déterminé, chaque logo trouvé en 1 va être comparé avec le logo template.
+La mesure de comparaison est la distance (équation 4) qu'il y a entre le frame et le template dans le cluster.
+Tous les frames qui ont une distance inférieure à un certain threshold sont considérés comme des logos.
 
 *** Recherche des replays
-Une fois que les logos sont détectés, nous pouvons trouver les replays en 
-cherchant les paires de logos éloignés de moins de 80 seconde (durée 
-maximum d'un replay).
+Une fois que les logos sont détectés, nous pouvons trouver les replays en cherchant les paires de logos éloignés de moins de 80 seconde (durée maximum d'un replay).
 
-*** Conclusion sur cette méthode
-Trop dépendant de la luminance, ne parvient pas à détecter les logo 
-peu lumineux. 
-Peu précis (trop de faux positif)
-Dépend de trop de paramètres (seuil de luminance, ...) affectant 
-les logos détectés.
+*** Résultats obtenus et conclusion sur cette méthode
+[[file:robust_res.JPG]]
+Après avoir implémenté cette méthode, nous avons constaté que celle-ci n'est pas efficace et ne fonctionne pas du tout sur notre ensemble de test.
+Cette approche est trop dépendant de la luminance et elle ne parvient pas à détecter les logos peu lumineux.
+De plus, les bases mathématiques (notamment la manière de choisir le cluster et la mesure de distance) sont un peu douteuses.
+Enfin, celle-ci dépend trop du paramètre "seuil de luminance" affectant les logos détectés.
+Le seuil de luminance fournis par les auteurs ne produit pas de bons résultats sur toutes les vidéos.
+Nous n'avons pas réussi à trouver une valeur pour le seuil de luminance qui obtienne universellemnt de bons résultats.
+Un seuil à 100000 détecte les logos de Ligue 1 mais pas les logos de Liga.
+Un seuil de 75000 détecte les logos de Liga et de Ligue 1, mais laisse passer trop de faux positifs.
+Les logos de Premier League quant à eux ne sont pas tous détectés avec un seuil à 50000, alors que ce seuil accepte un grand nombre de faux positifs.
+Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en place un système de détection de replays robuste et efficace.
 
 ** Fast Highlight Detection and Scoring for Broadcast Soccer Video Summarization using On-Demand Feature Extraction and Fuzzy Inference
 *** Idée
@@ -332,6 +342,7 @@ Nous nous intéressons à l'état de l'art concernant la détection d'action
 dans les vidéos. En effet, la transition d'un logo s'effectue sur plusieurs 
 frames consécutives; il y a donc une composante temporelle à notre recherche,
 et nous pouvons considérer la transition d'un logo comme une action.
+
 *** Two-Stream Convolutional Networks for Action Recognition in Videos
 Cet article est écrit par Karen Simonyan et Andrew Zisserman. Dans celui-ci,
 ils proposent de séparer la tâche de reconnaissance d'action dans les vidéos en 
@@ -347,6 +358,10 @@ sont des réseaux de neurones convolutifs profonds.
 Ce réseau a une architecture de classifieur d'image classique. Il va permettre
 de donner un indice fort pour la prédiction, car certaines actions sont très 
 liées à certains objets.
+De plus, la recherche dans le domaine de la classification est un domaine à part entière;
+toutes les avancées dans le domaine augmenteront l'efficacité de ce classifieur.
+Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches
+de transfer learning sont efficaces.
 
 **** Classifieur temporel
 [[file:optical_flow.png]]
@@ -364,18 +379,42 @@ frame #50, il faudra calculer l'optical flow entre le frame #50 et le frame #51;
 #50 et #52; etc... jusqu'à #50 à #55.
 
 **** Méthode d'évalutation et résultats obtenus
+[[file:two_stream_res.png]]
+Source : Table 4: Mean accuracy (over three splits) on UCF-101 and HMDB-51.
+ 
 Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel
-est entraîné de zéro. Les dataset utilisés pour l'entraînement sont UCF-101 et
-HMDB-51, contenant à eux deux 13k vidéos. 
-**** 
+est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).
+Les dataset utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB-51,
+contenant à eux deux près de 20000 vidéos annotées.
+
+*Note* Pour calculer la classe d'un frame à l'instant t, les auteurs proposent
+deux méthodes :
+- fusion par la moyenne (by averaging) : y_t = y_t_spatial + y_t_temporal / 2
+- fusion par SVM (by SVM) : un SVM multiclasse linéaire est entrainé pour 
+prédire la classe à partir du softmax des scores L2-normalisés.
+
+Les résultats en *link table* montrent l'efficacité de leur méthode par rapport
+aux autres approches état de l'art.
+
+Nous pouvons voir que leur approche two-stream avec fusion SVM est la plus 
+efficace sur le dataset UCF-101, et qu'elle a aussi de bons résultats sur
+HMDB-51.
+
+Ce qui est le plus intéressant dans cet article, c'est l'amélioration
+qu'apporte l'ajout de la composante temporelle.
+En effet, le classifieur d'image simple (spatial) n'a que 73.0% (UCF-101) et 40.5% (HMBD-51), tandis que le classifieur qui prend en compte l'image et la temporalité (two-stream model) atteint *88.0%* et 59.4%; ce qui est une nette amélioration.
+Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'image indépendante, mais comme une suite de séquence avec un lien au sein de chaque séquence.
+Il semblerai que la temporalité a une très grande importance pour  l'analyse de vidéos.
+
+*** Learning Spatiotemporal Features with 3D Convolutional Networks
+Dans cet article, Du Tran et. al proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos.
+
 
 *** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
-- ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
--- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
-Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
--- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
-Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un
-problème important à considérer.
+ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
+- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos. Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
+- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
+Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un problème important à considérer.
 
 
 ** Scrapping
@@ -412,4 +451,6 @@ FPS : frame per second / image par seconde
 Cropper
 
 * Source
-Two-Stream Convolutional Networks for Action Recognition in Videos, Karen Simonyan Andrew Zisserman, 2014
+Two-Stream Convolutional Networks for Action Recognition in Videos; Simonyan, Karen; Zisserman, Andrew; 2014
+Learning Spatiotemporal Features with 3D Convolutional Networks, Tran, Du; Bourdev, Lubomir; Fergus, Rob; Torresani, Lorenzo; Paluri, Manohar; 2014
+Xu, W., & Yi, Y. (2011). A Robust Replay Detection Algorithm for Soccer Video. IEEE Signal Processing Letters, 18(9). Equation (4)

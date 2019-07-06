@@ -1,4 +1,4 @@
-% Created 2019-06-27 jeu. 17:39
+% Created 2019-07-01 lun. 17:36
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -26,6 +26,7 @@
 
 \maketitle
 \tableofcontents
+
 
 
 
@@ -479,17 +480,70 @@ sont des réseaux de neurones convolutifs profonds.
 Ce réseau a une architecture de classifieur d'image classique. Il va permettre
 de donner un indice fort pour la prédiction, car certaines actions sont très 
 liées à certains objets.
-\end{enumerate}
 
+\item Classifieur temporel
+\label{sec-8-1-1-2}
+\includegraphics[width=.9\linewidth]{optical_flow.png}
+Source : Two-Stream Convolutional Networks for Action Recognition in Videos, Figure 2
+L'innovation de l'article vient de l'introduction du classifieur temporel.
+L'idée est de détecter le mouvement des objets dans la vidéo, car un mouvement
+est la représentation d'un objet dans le temps.
+Les auteurs appellent leur approche "optical flow stacking".
+Dans celle-ci ils utilisent la méthode "optical flow" pour détecter
+le mouvement des objets entre des frames consécutives. 
+Ces mouvements vont être stockés dans des vecteurs et utilisés par le classifieur.
+Ils définissent aussi un hyperparamètre L qui définit la distance maximum entre deux frames
+pour laquel il faut calculer l'optical flow. Par exemple, si L=5, alors pour le 
+frame \#50, il faudra calculer l'optical flow entre le frame \#50 et le frame \#51; entre
+\#50 et \#52; etc\ldots{} jusqu'à \#50 à \#55.
+
+\item Méthode d'évalutation et résultats obtenus
+\label{sec-8-1-1-3}
+\includegraphics[width=.9\linewidth]{two_stream_res.png}
+Source : Table 4: Mean accuracy (over three splits) on UCF-101 and HMDB-51. 
+Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel
+est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).
+Les dataset utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB-51,
+contenant à eux deux près de 20000 vidéos annotées.
+
+\textbf{Note} Pour calculer la classe d'un frame à l'instant t, les auteurs proposent
+deux méthodes :
+\begin{itemize}
+\item fusion par la moyenne (by averaging) : y$_{\text{t}}$ = y$_{\text{t}}$$_{\text{spatial}}$ + y$_{\text{t}}$$_{\text{temporal}}$ / 2
+\item fusion par SVM (by SVM) : un SVM multiclasse linéaire est entrainé pour
+\end{itemize}
+prédire la classe à partir du softmax des scores L2-normalisés.
+
+Les résultats en \textbf{link table} montrent l'efficacité de leur méthode par rapport
+aux autres approches état de l'art.
+
+Nous pouvons voir que leur approche two-stream avec fusion SVM est la plus 
+efficace sur le dataset UCF-101, et qu'elle a aussi de bons résultats sur
+HMDB-51.
+
+Ce qui est le plus intéressant dans cet article, c'est l'amélioration
+qu'apporte l'ajout de la composante temporelle.
+En effet, le classifieur d'image simple (spatial) n'a que 73.0\% (UCF-101) et 
+40.5\% (HMBD-51), tandis que le classifieur qui prend en compte l'image et 
+la temporalité (two-stream model) atteint \textbf{88.0\%} et 59.4\%; ce qui 
+est une nette amélioration. Cet article nous a renforcé dans l'hypothèse
+qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'image 
+indépendante, mais comme une suite de séquence avec un lien au sein de 
+chaque séquence.
+Il semblerai que la temporalité a une très grande importance pour 
+l'analyse de vidéos.
+\end{enumerate}
 
 \subsubsection{Temporal Segment Networks: Towards Good Practices for Deep Action Recognition}
 \label{sec-8-1-2}
+ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
 \begin{itemize}
-\item ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
+\item Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
 \end{itemize}
--- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos.
 Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
--- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
+\begin{itemize}
+\item Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
+\end{itemize}
 Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un
 problème important à considérer.
 
