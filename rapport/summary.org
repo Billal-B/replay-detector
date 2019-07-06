@@ -336,27 +336,23 @@ Les limitations de notre méthode sont les suivantes :
   la fin des replays (un simple fondu remplace le logo).
 
 
-
-* Deuxième partie : Détection avec deep learning
-
-** Etat de l'art
+* Apprentissage profond : état de l'art pour la reconnaissance d'action dans les vidéos
 Nous nous intéressons à l'état de l'art concernant la détection d'action
 dans les vidéos. En effet, la transition d'un logo s'effectue sur plusieurs 
 frames consécutives; il y a donc une composante temporelle à notre recherche,
 et nous pouvons considérer la transition d'un logo comme une action.
 
-*** Two-Stream Convolutional Networks for Action Recognition in Videos
+** Two-Stream Convolutional Networks for Action Recognition in Videos
 Cet article est écrit par Karen Simonyan et Andrew Zisserman. Dans celui-ci,
 ils proposent de séparer la tâche de reconnaissance d'action dans les vidéos en 
 deux parties : une composante spatiale et une composante temporelle.
 La composante spatiale contient l'information concernant sur les objets dans
 la vidéo; tandis que la composante temporelle l'information sur les 
 déplacements de ces objets et de la caméra. 
-A partir de ces observations, les auteurs proposent d'entraîner un classifieur
-spatial (Spatial stream ConvNet) et un classifieur temporel (). Ces classifieurs
-sont des réseaux de neurones convolutifs profonds. 
+A partir de ces observations, les auteurs proposent d'entraîner un classifieur spatial (Spatial stream ConvNet) et un classifieur temporel (Temporal stream ConvNet).
+Ces classifieurs sont des réseaux de neurones convolutifs profonds.
 
-**** Classifieur spatial
+*** Classifieur spatial
 Ce réseau a une architecture de classifieur d'image classique. Il va permettre
 de donner un indice fort pour la prédiction, car certaines actions sont très 
 liées à certains objets.
@@ -365,22 +361,19 @@ toutes les avancées dans le domaine augmenteront l'efficacité de ce classifieu
 Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches
 de transfer learning sont efficaces.
 
-**** Classifieur temporel
+*** Classifieur temporel
 [[file:optical_flow.png]]
 Source : Two-Stream Convolutional Networks for Action Recognition in Videos, Figure 2
 L'innovation de l'article vient de l'introduction du classifieur temporel.
-L'idée est de détecter le mouvement des objets dans la vidéo, car un mouvement
-est la représentation d'un objet dans le temps.
-Les auteurs appellent leur approche "optical flow stacking".
-Dans celle-ci ils utilisent la méthode "optical flow" pour détecter
-le mouvement des objets entre des frames consécutives. 
-Ces mouvements vont être stockés dans des vecteurs et utilisés par le classifieur.
+L'idée est de détecter le mouvement des objets dans la vidéo, car un mouvement est la représentation d'un objet dans le temps.
+Les auteurs appellent leur approche "optical flow stacking" (empilement de flux optique).
+Dans celle-ci, ils utilisent la méthode "optical flow" pour détecter le mouvement des objets entre des frames consécutives.
 Ils définissent aussi un hyperparamètre L qui définit la distance maximum entre deux frames
-pour laquel il faut calculer l'optical flow. Par exemple, si L=5, alors pour le 
-frame #50, il faudra calculer l'optical flow entre le frame #50 et le frame #51; entre
-#50 et #52; etc... jusqu'à #50 à #55.
+pour laquel il faut calculer le flux optique. Par exemple, si L=5, alors pour le
+frame t, il faudra calculer le flux entre le frame t et le frame t+1; entre
+t+1 et t+2; etc... jusqu'à t+4 à t+5. Chacun de ces flux servira d'entrée au classifieur temporel pour le frame t.
 
-**** Méthode d'évalutation et résultats obtenus
+*** Méthode d'évalutation et résultats obtenus
 [[file:two_stream_res.png]]
 Source : Table 4: Mean accuracy (over three splits) on UCF-101 and HMDB-51.
  
@@ -408,7 +401,7 @@ En effet, le classifieur d'image simple (spatial) n'a que 73.0% (UCF-101) et 40.
 Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'image indépendante, mais comme une suite de séquence avec un lien au sein de chaque séquence.
 Il semblerai que la temporalité a une très grande importance pour  l'analyse de vidéos.
 
-*** Learning Spatiotemporal Features with 3D Convolutional Networks
+** Learning Spatiotemporal Features with 3D Convolutional Networks
 Dans cet article, Du Tran et. al proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neuronnes profond.
 L'objectif est d'apprendre des caractéristiques qui soient :
 - générique : c'est à dire la capacité à representer différents types de vidéos
@@ -416,24 +409,53 @@ L'objectif est d'apprendre des caractéristiques qui soient :
 - efficace (computationnellement): pour traiter les vidéos en temps réel
 - simple (à implémenter) : afin de fonctionner même avec les modèles simples (comme un classifieur linéaire)
 
-**** Apport de l'article
+*** Apport de l'article
 [[file:3D_vs_2_stream.JPG]]
-Pour apprendre ces caractéristiques, l'entrée du réseau ne va pas être une image (2D), mais une séquence d'image (3D).
-C'est sur ce point que cette approche diffère de Two-Stream Convolutional Networks for Action Recognition in Videos.
-Pour prédire la classe d'un frame à l'instant t, il faut faire une fusion de la sortie du réseau spatial et du réseau temporel.
-De plus, l'apprentissage du réseau temporel est séparé de celui du réseau réseau spatial, ce qui ne permet pas au réseau de capturer l'information temporel relativement à l'information spatial.
-Même si le réseau temporel prend plusieurs frames en entrée (paramètre L > 1), la convolution 2D va écraser la composante temporelle.
+Source : Learning Spatiotemporal Features with 3D Convolutional Networks Figure 1
+Dans l'approche Two-Stream Convolutional Networks for Action Recognition in Videos, deux réseaux à convolution 2D sont utilisés (un spatial et un temporel).
+L'apprentissage du réseau temporel est séparé de celui du réseau réseau spatial, ce qui ne permet pas d'avoir un réseau capturant l'information temporel relativement à l'information spatial.
+De plus, même si le réseau temporel prend plusieurs frames en entrée (paramètre L > 1), la convolution 2D va écraser la composante temporelle car sa sortie sera une image (2D).
+La figure *XXX* illustre la différence entre un réseau à convolution 2D (approche de K. Simonyan et A. Zisserman) et un réseau à convolution 3D (Tran et al.). Un réseau à convolution 2D aura en sortie une image (2D) même si l'entrée est une séquence d'images, tandis qu'un réseau à convolution 3D aura en sortie une image relative à une autre dimension (dans notre cas, le temps).
 
+En choisissant d'entraîner leur réseau à partir de séquence d'images, les auteurs espèrent pouvoir apprendre la temporalité d'une manière "moins artificielle" que dans l'approche précédente (qui nécessite un pré-traitement sur les images pour pouvoir calculer les images d'optical flow servant au réseau temporel).
 
+*** Architecture et entraînement du réseau
+[[file:c3d_architecure.jpg]]
+Source : Figure 3
+L'entrée de ce réseau est de dimension c * l * h * w où c est le nombre de canal des images (3 pour la couleur, 1 pour les images en noir et blanc), l le nombre d'image dans les séquences, h la longueur et w la largeur.
+L'architecture conseillée par les auteurs est 8 couches de convolution et 5 couches de pooling, ainsi que 2 couches complètement connectées et la fonction softmax pour la couche de sortie.
+Le kernel recommandé par les auteurs est 3 * 3 * 3 avec un pas (stride) de 1 * 1 * 1 pour toutes les couches de convolution.
+Toutes les couches de pooling sont max pooling avec une taille de kernel 2 * 2 * 2 (sauf pour la première qui est 1 * 2 * 2) avec un stride 2 * 2 * 2 (sauf pour la première qui a un stride de 1 * 2 * 2).
+Pour finir avec l'architecture, les deux couches complètement connectées ont 4096 sorties.
 
-*** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
+Ce réseau va être entraîné de zéro par descente du gradient à partir de séquences d'images annotées.
+Le taux d'apprentissage est de 0.003 et est divisé par 10 toutes les 4 epoch.
+L'entraînement s'arrête après 16 epoch.
+
+Après l'entraînement, le réseau peut être utilisé comme un extracteur de caractéristique pour des tâches d'analyse vidéo.
+Pour se faire, la vidéo va être découpée en des clips de 16 frames (avec 8 frames de chevauchement entre deux clips consécutifs).
+Ensuite, chacun de ces clips va être passé au réseau et l'avant dernière couche complètement connectée (fc6) va contenir les caractéristisques du clip.
+
+* Qu'est-ce que ce réseau apprend ? * Ce réseau apprend à se focalisant sur l'image des premiers frames, et à traquer leur déplacement dans les frames suivants.
+
+*** Résultat pour la tâche de reconnaissance d'action
+[[file:c3d_result.jpg]]
+Ces résultats ont été obtenus par les auteurs pour la tâche de reconnaissance d'action sur le corpus de vidéo UCF101.
+Nous voyons que l'approche par réseau à convolution 3D est la plus efficace.
+
+*** Conclusion
+TODO
+Pour ma part, je trouve cette approche très intéressante et élégante, de par sa simplicité.
+En effet, le réseau apprend la temporalité sans qu'il soit nécessaire d'injecter l'information temporelle de manière artificielle ou bien en compliquant l'architecture du réseau.
+
+** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
 ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
 - Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos. Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
 - Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
 Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un problème important à considérer.
 
 
-** Scrapping
+* Collecte des données pour l'apprentissage profond
 L'approche par matching de contours convient tout à fait à la tâche de scrapping.
 En effet, elle est :
 - rapide : moins de *X* minutes sur une machine *machine de référence EC2 (ou autre)* pour une vidéo de 90 minutes à 60 fps

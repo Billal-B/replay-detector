@@ -17,9 +17,9 @@ trait Configuration {
   def startFrame: Int = 0
   def videoWidth: Int = 100
   def videoHeight: Int = 100
-  def knownLogo: Boolean = false // todo : move this (conf module)
-  def saveWindowSize = 10 // should be a multiple of 2
-  def numberOfWindow = 1
+  def knownLogo: Boolean = true // todo : move this (conf module)
+  def saveWindowSize = 1 // should be a multiple of 2
+  def numberOfWindow = 10
   def uploadToS3 = false
 
   def runId:String = new Timestamp(System.currentTimeMillis())
