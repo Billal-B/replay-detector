@@ -21,7 +21,7 @@ object OpenCvUtils {
   * Doesn't release the img matrix.
   * */
   def findContours(img: Mat): util.List[MatOfPoint] = {
-    val contours = List.empty[MatOfPoint].asJava
+    val contours = new java.util.Vector[MatOfPoint]()
     val hierarchy = new Mat()
 
     org.opencv.imgproc.Imgproc.findContours(img, contours, hierarchy, RETR_LIST, CHAIN_APPROX_SIMPLE, new Point(0,0))

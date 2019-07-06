@@ -1,14 +1,9 @@
 import java.io.File
-import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
-import java.util.UUID
 
+import org.opencv.core.{Core, Mat}
 import org.opencv.videoio.VideoCapture
 import org.opencv.videoio.Videoio._
-import org.opencv.core.Mat
-import org.opencv.core.Core
-
-import scala.util.Try
 
 
 case class Frame(index: Int, matrix: Mat, hist: Option[Mat] = None, accDiff: Double = 0.0, orbResult: Option[Mat] = None)
@@ -16,15 +11,16 @@ case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 case class Replay(begin : Int, end: Int)
 
 
-trait VideoModule {
-  def videoName = "video.mp4"
-  def frameToAnalyse: Int = Int.MaxValue
+trait Configuration {
+  def videoName = "C:\\Users\\Billal\\Projet\\Memoire\\video.mp4"
+  def frameToAnalyse: Int = 20000
   def startFrame: Int = 0
   def videoWidth: Int = 100
   def videoHeight: Int = 100
   def knownLogo: Boolean = false // todo : move this (conf module)
-  def saveWindowSize = 1 // should be a multiple of 2
-  def numberOfWindow = 10
+  def saveWindowSize = 10 // should be a multiple of 2
+  def numberOfWindow = 1
+  def uploadToS3 = false
 
   def runId:String = new Timestamp(System.currentTimeMillis())
     .toString
@@ -36,19 +32,15 @@ trait VideoModule {
   // def findShot: Vector[Int]
 }
 
-object Main extends VideoModule {
+object Main extends App with Configuration {
 
-  val uploadToS3 = true
-
-  def main(args: Array[String]) = {
-    System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-    setup()
-    val filename = args.headOption getOrElse videoName
-    replayDetection(filename)
-    if (uploadToS3) {
-      uploadLogosToS3()
-      uploadKnownLogoToS3()
-    }
+  System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
+  setup()
+  val filename = args.headOption getOrElse videoName
+  replayDetection(filename)
+  if (uploadToS3) {
+    uploadLogosToS3()
+    uploadKnownLogoToS3()
   }
 
   // ensure every folder exists, also clean the shot folder
@@ -91,14 +83,14 @@ object Main extends VideoModule {
     val fps: Double = capture.get(CAP_PROP_FPS)
     val t = System.currentTimeMillis()
 
-    val shotDetector = new ShotDetector(capture) with VideoModule
+    val shotDetector = new ShotDetector(capture) with Configuration
     // shot detection
     val shotFrames = shotDetector.findShot
     val computeSlidingWindowsTime = System.currentTimeMillis() - t
     println("Time to find shots: " + computeSlidingWindowsTime)
 
     // replay detection
-    val replayDetector = new ReplayDetector(capture) with VideoModule
+    val replayDetector = new ReplayDetector(capture) with Configuration
     val foundShots = shotFrames.groupBy(s => (s.toDouble / (fps /2)).round).flatMap(_._2.headOption).toVector
     replayDetector.saveShots(foundShots.sorted) // !!!! needs to be SORTED (ascending) !!!!
     val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
