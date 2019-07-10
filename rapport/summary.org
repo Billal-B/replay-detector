@@ -381,7 +381,7 @@ t+1 et t+2; etc... jusqu'à t+4 à t+5. Chacun de ces flux servira d'entrée au 
 *** Méthode d'évalutation et résultats obtenus
 [[file:two_stream_res.png]]
 Source : Table 4: Mean accuracy (over three splits) on UCF-101 and HMDB-51.
- 
+
 Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel
 est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).
 Les dataset utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB-51,
@@ -449,7 +449,8 @@ Ces résultats ont été obtenus par les auteurs pour la tâche de reconnaissanc
 Nous voyons que l'approche par réseau à convolution 3D est la plus efficace.
 
 *** Conclusion
-TODO
+Dans cet article, les auteurs ont adressé le problème de la temporalité dans les vidéos.
+Ils ont montré qu'un réseau à convolution 3D est capable de modéliser l'information temporelle et spatiale simultanément, et donc d'obtenir de meilleurs résultats que les réseaux à convolution 2D sur plusieurs tâches d'analyse de vidéos.
 Pour ma part, je trouve cette approche très intéressante et élégante, de par sa simplicité.
 En effet, le réseau apprend la temporalité sans qu'il soit nécessaire d'injecter l'information temporelle de manière artificielle ou bien en compliquant l'architecture du réseau.
 
