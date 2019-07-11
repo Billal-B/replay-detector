@@ -454,12 +454,24 @@ Ils ont montré qu'un réseau à convolution 3D est capable de modéliser l'info
 Pour ma part, je trouve cette approche très intéressante et élégante, de par sa simplicité.
 En effet, le réseau apprend la temporalité sans qu'il soit nécessaire d'injecter l'information temporelle de manière artificielle ou bien en compliquant l'architecture du réseau.
 
-** Temporal Segment Networks: Towards Good Practices for Deep Action Recognition
-ConvNet ne peut pas être appliquée à la reconnaîssance d'action dans les vidéos pour deux raisons :
-- Les dépendances temporelles éloignées jouent un rôle important dans la compréhension des actions dans les vidéos. Or, les réseaux ConvNet classiques se focalisent sur les dépendances proches (les mouvements brefs).
-- Entraîner un réseau de type ConvNet requiert un gros volume de données pour obtenir des performances optimales.
-Or, obtenir des ensembles de données annotées et de qualité est une tâche compliquée; le sur apprentissage est un problème important à considérer.
+** Beyond Short Snippets: Deep Networks for Video Classification
+Dans cet article, les auteurs proposent d'utiliser une architecture hybride à base de CNN et de RNN (LSTM) pour l'analyse vidéo.
+Les CNN sont des réseaux particulièrement efficaces pour analyser les frames des vidéos, c'est le CNN qui va se charger de la composante spatiale de la vidéo.
 
+[[file:cnn_lstm.PNG]]
+Source : Beyond Short Snippets: Deep Networks for Video Classification; Figure 3
+* copié collé ce que j'ai fait pour mariage RNN*
+Les LSTM sont un type particulier de RNN capables d'apprendre des dépendances à long terme.
+Ceci est dû à leur capacité à stocker l'information dans leurs "memory cells".
+Ils sont donc adaptés à l'apprentissage de la composante temporelle des vidéos.
+
+Les auteurs proposent également d'utiliser d'incorporer l'information de mouvement des objets dans la vidéo en calculant le flux optique (comme dans la méthode Two-Stream Convolutional Networks for Action Recognition in Videos) des frames adjacents.
+
+*** Approche
+L'aspect le plus important de la recherche des auteurs concernent la manière dont le LSTM va recevoir l'information du CNN.
+Deux architectures de CNN sont utilisés par les auteurs : AlexNet et GoogLeNet.
+Afin que le LSTM puisse utiliser la sortie du CNN, il est nécessaire d'avoir une architecture de pooling efficace.
+Les auteurs en proposent cinq.
 
 * Collecte des données pour l'apprentissage profond
 L'approche par matching de contours convient tout à fait à la tâche de scrapping.
@@ -492,7 +504,9 @@ Histogramme :
 Frame :
 Shot : plan
 FPS : frame per second / image par seconde
-Cropper
+Cropper :
+CNN : Convolutional Neural Network
+LSTM : Long Short Term Memory
 
 * Source
 ** Articles relatifs à l'apprentissage profond
@@ -500,6 +514,7 @@ Gradient-Based Learning Applied to Document Recognition; Y. LeCun, L. Bottou, Y.
 Learning Hierarchical Features for Scene Labeling; C. Farabet, C. Couprie, L. Y. LeCun; 2013
 Two-Stream Convolutional Networks for Action Recognition in Videos; K. Simonyan, A. Zisserman; 2014
 Learning Spatiotemporal Features with 3D Convolutional Networks; D. Tran, L. Bourdev; R. Fergus; L. Torresani; M. Paluri; 2014
+Beyond Short Snippets: Deep Networks for Video Classification; J.Y.H. Ng, M. Hausknecht; 2015
 
 ** Articles relatifs à la détection de replays
 A Robust Replay Detection Algorithm for Soccer Video; W. Xu, Y. Yi(2011).
