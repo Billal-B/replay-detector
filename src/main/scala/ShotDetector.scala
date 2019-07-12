@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 /*
 * Handles the segmentation of videos into shots
 * */
-class ShotDetector(capture: VideoCapture) extends VideoModule {
+class ShotDetector(capture: VideoCapture) extends Configuration {
   import OpenCvUtils._
   import ShotDetector._
 

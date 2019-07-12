@@ -14,6 +14,3 @@ assemblyMergeStrategy in assembly := {
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
   case x => MergeStrategy.first
 }
-
-// https://mvnrepository.com/artifact/org.openpnp/opencv
-libraryDependencies += "org.openpnp" % "opencv" % "3.4.2-0"

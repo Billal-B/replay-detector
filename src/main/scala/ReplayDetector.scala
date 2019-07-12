@@ -13,7 +13,7 @@ import org.opencv.videoio.VideoCapture
 
 
 
-class ReplayDetector(capture: VideoCapture) extends VideoModule {
+class ReplayDetector(capture: VideoCapture) extends Configuration {
 
   import OpenCvUtils._
 
@@ -97,14 +97,14 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
 
     val score = collection.mutable.Map.empty[(Int, Int), Double] // todo: find better data structure than Map
     val totScore = collection.mutable.Map.empty[Int, Double] // todo: find better data structure than Map
-    for (idx <- 0 to contours.size().toInt) {
+    for (idx <- 0 until contours.size()) {
       // val contourX:Int = contour(new Range(0,0))(1)
-      val contourX = contours.get(0).get(0,1)(0)
+      val contourX = contours.get(0).get(1,0)(0)
       val contourY = contours.get(0).get(0,0)(0)
       val x:Int = (contourX / mosaicWidth).toInt
       val y:Int = (contourY / mosaicHeight).toInt
 
-      val contour = new MatOfPoint2f();
+      val contour = new MatOfPoint2f()
       contours.get(idx).convertTo(contour, CV_32F)
       val _arcLength = arcLength(contour, true)
       val arcScore = if (_arcLength > minLogoSegmentLength) _arcLength else 0
@@ -126,7 +126,7 @@ class ReplayDetector(capture: VideoCapture) extends VideoModule {
       //draw.release()
     }
 
-    for (idx <- 0 to contours.size().toInt) {
+    for (idx <- 0 until contours.size().toInt) {
       contours.get(idx).release()
     }
 
