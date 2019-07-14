@@ -1,8 +1,9 @@
 #+TITLE:Mémoire
-#+SUBTITLE: 
+#+AUTHOR:Billal Boudjoghra
 #+LATEX_HEADER: \setlength\parindent{0pt}
 #+LATEX_HEADER: \setlength\parindent{0pt}
 #+LATEX_HEADER: \usepackage{placeins}
+#+OPTIONS: \n:t
 
 * Sportagraph
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R&D).
@@ -34,6 +35,7 @@ Les avancements dans le domaine de l'apprentissage profond et l'accès à un vol
 En particulier, l'adoption globale des téléphones intelligents et de leur caméra intégrée a accru de manière exponentielle le nombre de vidéos disponibles sur Internet, à tel point qu'il est devenu impossible pour l'humain d'ingérer manuellement le contenu de toutes les vidéos disponibles sur la toile.
 Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
 Plus particulièrement, nous focalisons notre recherche sur les vidéos de match de football.
+
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.
 
 *Pourquoi les replays ?* Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.
@@ -59,7 +61,7 @@ Ce modèle servira de base de comparaison avec le modèle par apprentissage auto
 Afin d'avoir le meilleur modèle, nous avons comparé plusieurs approches.
 
 ** A Robust Replay Detection
-Cette approche cite:xu11_robus_replay_detec_algor_soccer_video détecte les replays en trouvant les logos dans la vidéo.
+Cette approche cite:xu11_robus_replay_detec_algor_soccer_video détecte les replays en trouvant les logos dans les vidéo.
 Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est présent pendant 0.8 secondes soit 18 frames pour une vidéo de 24 FPS.
 Tous les frames qui ont obtenu un score supérieur à un certain seuil sont considérés comme des "logo templates".
 
@@ -99,10 +101,41 @@ Nous n'avons pas réussi à trouver une valeur pour le seuil de luminance qui ob
 Un seuil à 100000 détecte les logos de Ligue 1 mais pas les logos de Liga.
 Un seuil de 75000 détecte les logos de Liga et de Ligue 1, mais laisse passer trop de faux positifs.
 Les logos de Premier League quant à eux ne sont pas tous détectés avec un seuil à 50000, alors que ce seuil accepte un grand nombre de faux positifs.
+
 Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en place un système de détection de replays robuste et efficace.
 
+** Mean Shift Based video Segment Representation And Applications To Replay Detection
+Dans cet article cite:Ling_Yu_Duan, les auteurs présentent une méthode permettant de détecter les replays.
+L'idée est d'apprendre une base de représentation compressée de logo avec une méthode comme le spectral hashing (cite:NIPS2008_3383), puis de se servir de cette base de données pour trouver les logo au début à la fin de replays.
+*** Algorithme
+#+BEGIN_SRC
+L = []
+R = []
+Segmenter la vidéo en frame
+Pour chaque frame f
+  Calculer la représentation f' de r
+  Pour chaque représentation r dans la base de représentation:
+    Si distance(f', r) < Seuil:
+      Ajouter f à L
+Pour chaque logo l dans L:
+  Trouver le logo l' lui correspondant
+  Ajouter (l, l') à R
+#+END_SRC
+La représentation des images est un hash obtenu par un algorithme de hashing d'image (spectral hashing).
+La distance utilisée pour comparer le hash des images est la distance de Wasserstein.
+*** Résultats 
+#+CAPTION: Performance sur la tâche de détection de replay :label:mean-shift-res
+[[file:mean_shift_res.png]]
+Les résultats obtenus par les auteurs sont présentés dans la Figure ref:mean-shift-res. 
+Ceux-ci sont bons, mais l'ensemble de test n'est pas assez représentatif (seulement quatres vidéos).
+Les avantages des représentations hashées pour les images sont les suivants :
+- un hash est compacte (peu d'espace nécessaire pour les stocker)
+- comparer des hash est rapide (comparer deux frames)
+- chercher un hash dans une table de hachage est rapide (chercher un frame dans une base de données)
+Pour ces raisons, cette approche est tout à fait adaptée à la reconnaissance de logo.
+
 ** Automatic summarization of soccer highlights using audio-visual descriptors
-Cette approche cite:Ravent_s_2015 ressemble à la précédente, mais introduit néanmoins une différence importante : un pré-traitement sur la vidéo pour en extraire les plans.
+Cette approche cite:Ravent_s_2015 ressemble à l'approche par luminance (cite:xu11_robus_replay_detec_algor_soccer_video), mais introduit néanmoins une différence importante : un pré-traitement sur la vidéo pour en extraire les plans.
 *** Algorithme
 #+BEGIN_SRC
 S = Détecter tous les shots (plans) dans la vidéo
@@ -118,6 +151,7 @@ L = Pour chaque shot S_i:
 *** Conclusion
 Cette méthode est trop semblable à l’approche “Robust Replay Detection” qui ne répond pas à nos besoin,
 cette approche ne fonctionnera pas dans notre cas (la luminance n’est pas un critère assez discriminant pour la reconnaissance de logo).
+
 Néanmoins, l’idée de découper la vidéo en “shot” (en plan) est intéressante et nous nous en servons par la suite.
 
 * Les approches proposées
@@ -139,7 +173,9 @@ Ces restrictions s'appliquent pour les raisons suivantes :
 
 ** Détection des plans
 Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logo pouvant se trouver au début et à la fin des replays.
-Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logo parmi tous les frames de la vidéo, nous réduisons la recherche à tous les frames qui sont entre deux plans.
+Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logo parmi tous les frames de la vidéo, nous pouvons réduire la recherche à tous les frames qui sont entre deux plans.
+
+C'est pourquoi nous allons chercher une méthode permettant de détecter les changements de plan dans les vidéos.
 
 *** Online, Simultaneous Shot Boundary Detection And Key Frame Extraction For Sports Videos Using Rank Tracing
 Cette méthode est proposée par W. Abd-Almageed en 2008 cite:Abd_Almageed_2008.
@@ -171,18 +207,18 @@ Nous pouvons donc nous permettre d’utiliser des algorithmes plus complexes que
 De plus, la segmentation en plan réduit le champs de recherche des frames logo, et donc le nombre de faux positifs potentiels.
 
 ** Première approche : ORB
-Dans cette approche, nous cherchons à reconnaître les logo dans la vidéo.
+Dans cette approche, nous cherchons à reconnaître les logo dans les vidéo.
 Pour ce faire, nous optons pour une approche de clustering. 
 L'idée est de clusteriser la vidéo en deux groupe : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
 
 *** Extraction des caractéristiques
 OpenCV permet d'extraire des features à partir des images (détection des bords des objets dans l'image).
-A partir de ça, nous pouvons représenter l'image comme un vecteur de feature.
+A partir de ça, nous pouvons représenter une image comme un vecteur de feature.
 Les méthodes d'extraction sont ORB cite:Rublee_2011 et AKAZE.
 
 *** KMeans
 OpenCV implémente aussi l'algorithme KMeans. Celui-ci permet de regrouper les objets similaires en fonction de leur feature. 
-Dans notre cas, il va nous permettre de créer 2 groupes d'images : logo / non logo.
+Dans notre cas, il va nous permettre de créer deux groupes d'images : logo / non logo.
 L'avantage de KMeans est qu'il est est très rapide et assez efficace dans la plupart des cas.
 C'est l'un des algorithmes de clusterisation les plus utilisés.
 
@@ -192,6 +228,10 @@ Dans toutes les expérimentations, la vidéo est découpée en shot (plan).
 Soit S l'ensemble des shots.
 
 *** 1 frame par shot
+Ici, nous ne récupérons les caractèristiques que d'une seule image par plan.
+
+#+CAPTION: Caractèristiques extraites par ORB (en vert), pour une seule image par plan
+#+ATTR_LATEX: :width 8cm
 [[file:orb_simple_res.JPG]]
 #+BEGIN_SRC
 - Récupérer le frame à la fin de chaque shot
@@ -206,25 +246,18 @@ Résultats :
 *** TODO meilleurs res
 Mauvais sur toutes les vidéos
 
-*** W frames par shot:
-#+BEGIN_SRC
-- Récupérer W frames pour chaque shot
-  - nous obtenons |S*W| frame, où W est le nombre de frame
-- Pour chaque frame, calculer ses features (orb ou akaze)
-  - nous obtenons |S*W| vecteurs
-- Utiliser KMeans avec K=2 pour séparer les vecteurs en deux groupes
-  - le groupe le plus petit est le groupe des logo
-#+END_SRC
-
-Résultats :
-Mauvais sur toutes les vidéos
 
 *** 1 fenêtre de frame par shot:
-[[file:akaze_window_res.JPG]]
+L'approche précédente ne récupère qu'une seule image par plan. 
+Or, les logos sont présents sur plusieurs frames consécutifs. 
+Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractèristiques pour chaque frame.
+#+CAPTION: Caractèristiques extraites par ORB (en vert) pour un plan (aggrégat des caractèristiques de chaque image dans le plan)
+#+ATTR_LATEX: :width 8cm
+file:akaze_window_res.JPG
 #+BEGIN_SRC
 - Récupérer W frames pour chaque shot, les régrouper en une fenêtre
-  - nous obtenons |S| fenêtre de dimension W, où W est le nombre de frame
-- Pour chaque fenêtre, calculer ses features (orb ou akaze)
+  - nous obtenons |S| fenêtres de dimension W, où W est le nombre de frame
+- Pour chaque fenêtre, calculer les features de chacun de ses frames (orb ou akaze)
   - Nous obtenons un vecteur de dimension |S*W|
 - Utiliser KMeans avec K=2 pour séparer les vecteurs en deux groupes
   - le groupe le plus petit est le groupe des logo
@@ -234,25 +267,37 @@ Résultats:
 De bons résultats sur la vidéo de PL.
 Mauvais résultats sur les autres vidéos.
 
-*** 1 fenêtre de frame par shot et différence des frames dans la fenêtre:
-[[file:orb_window_diff_res.JPG]]
-#+BEGIN_SRC
-- Récupérer W frames pour chaque shot, les régrouper en une fenêtre
-  - nous obtenons |S| fenêtre de dimension W, où W est le nombre de frame
-- Pour chaque fenêtre, calculer la matrice M égale à la différence de toute
-  les autres frames dans la fenêtre
-- Pour chaque matrice de différence, calculer ses features
-  - nous obtenons |S| vecteur s
-- Utiliser KMeans avec K=2 pour séparer les vecteurs en deux groupes
-  - le groupe le plus petit est le groupe des logo
-#+END_SRC
-Résultats :
-De bons résultats sur la vidéo de PL.
-Mauvais résultats sur les autres vidéos.
+*** Conclusion sur ces méthodes
+Le gros inconvénient de ces méthodes est le caractère arbitraire de la sélection du groupe de logo après le clustering.
+En effet, nous faisons l'hypothése qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.
+
+De plus, l'algorithme d'extraction de caractèristique ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.
 
 ** Seconde approche : matching de contours
-La méthode choisie différe avec les autres sur un point : au lieu de chercher à différencier les frames logo des frames non-logo, nous allons chercher les frames qui ont des formes en commun dans la vidéo.
-En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec 2 < t' < 90 (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et '.
+Cette méthode différe avec les autres sur un point : au lieu de chercher à différencier les frames logo des frames non-logo, nous allons chercher les frames qui ont des formes en commun dans la vidéo.
+En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec 2 < t' < 90 (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et t'.
+
+Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Almageed_2008) pour réduire la zone de recherche des logos de début et de fin des replays.
+
+L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leur frame.
+
+
+*** Mosaique de plan
+*** TODO resize img + put them together ie A + B = C
+Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque plan avec chaque frame des plans voisins.
+
+C'est pourquo, pour chaque shot deux images au format .png (et non au format jpg, car celui-ci prend trop d'espace disque) sont générées.
+
+Chaque image est de dimension I * I * width * height où I est le nombre de frame dans le shot.
+
+Ces images sont des matrices d'image qui vont permettre de comparer rapidement deux shot.
+La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.
+
+Pour comparer deux shot, il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur du conteur dans cette matrice.
+#+CAPTION: Mosaique pour un plan, avec les contours d'un logo de Premier League
+#+ATTR_LATEX: :width 8cm
+[[file:mosaique3.png]]
+
 *** Algorithme
 #+BEGIN_SRC
 - Pré traitement sur les shots
@@ -272,27 +317,12 @@ En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'i
   2. Si au moins 2 logo L’  match, alors LP est un logo
 - Trouver les replays grâce aux logos
 #+END_SRC
-Pré traitement :
-Les frames sont resizé puis cropé vers le centre (pour ne pas avoir l'affichage en haut de l'écran etc...), puis un blur est appliqué (bilateralFilter, permet de filtrer certains faux positifs), et enfin on applique Canny Edge Detection.
 
-Le point 3 de l’algorithme sert à filtrer les éventuels faux positifs.
 Notre algorithme est sensible au plan fixe et aux images avec beaucoup de bruits (ces images ont beaucoup de contours détectés par l’algorithme de détection de contours).
 Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur les plans, notamment en rajoutant du blur ou en supprimant le background, néanmoins, nous ne sommes pas parvenus à filtrer 100% des faux-positifs.
 
-*** Mosaique de plan
-*** TODO resize img + put them together ie A + B = C
-Pour chaque shot deux images au format .png (pas au format jpg, car celui-ci prend trop d'espace disque) sont générées.
+*** Résultats
 
-Chaque image est de dimension I * I * width * height où I est le nombre de frame dans le shot.
-
-Ces images sont en faites des matrices d'image qui vont permettre de comparer rapidement deux shot.
-La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.
-
-Pour comparer deux shot, il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur du conteur dans cette matrice.
-[[file:mosaique3.png]]
-
-*** Résultats et limitation
-Les résultats sans le filtrage des faux positifs (l’étape 3 de l’algorithme) sont un bon moyen d’évaluer l’efficacité de notre méthode.
 *** TODO : mettre les résultats ici
 Concernant le temps d’exécution, celui-ci est relié presque entièrement à la taille de la vidéo donnée en entrée, ainsi qu’à la taille des mosaiques.
 
@@ -301,6 +331,16 @@ Les limitations de notre méthode sont les suivantes :
 - Dans certaines vidéos, les logo de début et fin de replay ne sont pas les mêmes.
 - Dans certains vidéos, il y a des logo au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
 
+
+*** Conclusion sur cette méthode
+Cette méthode présente les avantages suivants :
+- elle est rapide
+- très peu de faux positifs
+Néanmoins, elle n'est pas adaptative. 
+En effet, elle n'est pas capable de détecter les replays si le logo n'est pas le même au début qu'à la fin; car elle n'apprend pas ce qu'est un logo, elle sait juste trouver les images avec des contours similaires.
+
+Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logo de replay.
+Cette méthode servira aussi de /baseline/ pour évaluer l'efficacité des modèles par apprentissage profond.
 
 * Apprentissage profond : les bases théoriques
 Dans notre recherche, nous allons aborder plusieurs types de réseaux d'apprentissage automatique.
@@ -334,8 +374,9 @@ La couche de convolution est généralement composée de la fonction de convolut
 
 *** Intéraction parcimonieuse
 #+CAPTION: Intéraction parcimonieuse (en haut), intéraction non parcimonieuse (en bas) label:sparse-vs-dense
-
+#+ATTR_LATEX: :width 8cm
 [[file:sparse_vs_dense.png]]
+
 À la différence des réseaux classiques où toutes les entrées intéragissent avec toutes les entrées, les réseaux à convolution ont des *intéractions parcimonieuses*. 
 C'est à dire que la taille du noyau (donc de l'intéraction avec l'entrée), est plus petite que la taille de l'entrée.
 C'est pourquoi les réseaux à convolution sont très efficaces pour le traitement d'image.
@@ -384,6 +425,8 @@ toutes les avancées dans le domaine augmenteront l'efficacité de ce classifieu
 Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches de transfer learning sont efficaces.
 
 *** Classifieur temporel
+#+CAPTION: Flux optique label:optical-flow
+#+ATTR_LATEX: :width 8cm
 [[file:optical_flow.png]]
 Source : Two-Stream Convolutional Networks for Action Recognition in Videos, Figure 2
 L'innovation de l'article vient de l'introduction du classifieur temporel.
@@ -507,36 +550,14 @@ RNN : Recurrent Neural Networks, ou réseaux de neurones récurrents (RNR) en fr
 CNN : Convolutional Neural Network, réseaux de neurones convolutifs (RNC) en français
 LSTM : Long Short Term Memory
 
-* Bibliographie
-** Articles relatifs à l'apprentissage profond
-Gradient-Based Learning Applied to Document Recognition; Y. LeCun, L. Bottou, Y. Bengio, P. Haffner; 1998
-Learning Hierarchical Features for Scene Labeling; C. Farabet, C. Couprie, L. Y. LeCun; 2013
-Two-Stream Convolutional Networks for Action Recognition in Videos; K. Simonyan, A. Zisserman; 2014
-Learning Spatiotemporal Features with 3D Convolutional Networks; D. Tran, L. Bourdev; R. Fergus; L. Torresani; M. Paluri; 2014
-Beyond Short Snippets: Deep Networks for Video Classification; J.Y.H. Ng, M. Hausknecht; 2015
-L'apprentissage profond; I. Goodfellow, Y. Bengio, A. Courville ; 2015
-** Articles relatifs à la détection de replays
-A Robust Replay Detection Algorithm for Soccer Video; W. Xu, Y. Yi(2011).
-Replay and key-events detection for sports video summarization using confined elliptical local ternary patterns and extreme learning machine; A. Javed, A. Irtaza; 2019
-Video Co-summarization: Video Summarization by Visual Co-occurrence; W. Chu; 2015
-ref:pan Automatic Detection Of Replay Segments In Broadcast Sports Programs By Detection Of Logos In Scene Transitions; H. Pan; 2002
-Mean Shift Based Video Segment Representation And Applications To Replay Detection; L. Duan; 2004
-Online, Simultaneous Shot Boundary Detection And Key Frame Extraction For Sports Videos Using Rank Tracing; W. Abd-Almageed; ‎2008
-On-line Key Frame Extraction and Video Boundary Detection using Mixed Scales Wavelets and SVD; A. Azeroual; 2016
-Highlight Summarization in Soccer Video based on Goalmouth Detection; Z. Zhao; 2006
-A General Framework for Automatic On-line Replay Detection in Sports Video; B. Han, Y. Yan; 2009
-An Efficient Framework for Automatic Highlights Generation from Sports Videos; A. Javed; 2016
-A New Slow-Motion Replay Extractor For Soccer Game Videos; E. Farn, L. Chen; 2003
-Fast Highlight Detection and Scoring for Broadcast Soccer Video Summarization using On-Demand Feature Extraction and Fuzzy Inference; M. Sigari, H. Soltanian-Zadeh;  2015
-Automatic Summarization Of Soccer Highlights Using Audio‑visual Descriptors; A. Raventós, R. Quijada, L. Torres, F. Tarrés; 2014
-A Novel Method For Slow Motion Replay Detection In Broadcast Basketball Video; C. Chen; 2014
-
-** Articles générals de vision par ordinateur
-ORB: an efficient alternative to SIFT or SURF; E. Rublee, V. Rabaud; 2011
-
 * Table des figures
-ref:calc-dist Xu, W., & Yi, Y. (2011). A Robust Replay Detection Algorithm for Soccer Video. IEEE Signal Processing Letters, 18(9). Equation (4)
-ref:sparse-vs-dense I. Goodfellow, Y. Bengio, A. Courville ; L'apprentissage profond; 2015; Chapitre 9, Figure 9.2
+ref:calc-dist Xu, W., & Yi, Y., A robust replay detection algorithm for soccer video, IEEE Signal Processing Letters, 18(9), 509–512 (2011).  http://dx.doi.org/10.1109/lsp.2011.2161287. Equation (4)
+
+ref:mean-shift-res Duan, L., Xu, M., Tian, Q., & Xu, C., Mean shift based video segment representation and applications to replay detection, 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing, (),  ().  http://dx.doi.org/10.1109/icassp.2004.1327209. Table 1
+
+ref:sparse-vs-dense Goodfellow, I., Bengio, Y., & Courville, A., Deep Learning (2016), : MIT Press. Figure 9.2
+
+ref:optical-flow Simonyan, K., & Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2
 
 bibliographystyle:unsrt
 bibliography:summary.bib
