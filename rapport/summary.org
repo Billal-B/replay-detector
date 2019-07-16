@@ -223,11 +223,11 @@ L'avantage de KMeans est qu'il est est très rapide et assez efficace dans la pl
 C'est l'un des algorithmes de clusterisation les plus utilisés.
 
 *** Expérimentation et résultat:
-Ensemble de test : une vidéo de ligue 1, une vidéo de liga, une vidéo de premier league et une vidéo NFL.
+L'ensemble de test est le suivant : une vidéo de ligue 1, une vidéo de liga, une vidéo de premier league et une vidéo NFL.
 Dans toutes les expérimentations, la vidéo est découpée en shot (plan).
 Soit S l'ensemble des shots.
 
-*** 1 frame par shot
+**** 1 frame par shot
 Ici, nous ne récupérons les caractèristiques que d'une seule image par plan.
 
 #+CAPTION: Caractèristiques extraites par ORB (en vert), pour une seule image par plan
@@ -243,11 +243,8 @@ Ici, nous ne récupérons les caractèristiques que d'une seule image par plan.
 #+END_SRC
 
 Résultats :
-*** TODO meilleurs res
-Mauvais sur toutes les vidéos
 
-
-*** 1 fenêtre de frame par shot:
+**** 1 fenêtre de frame par shot:
 L'approche précédente ne récupère qu'une seule image par plan. 
 Or, les logos sont présents sur plusieurs frames consécutifs. 
 Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractèristiques pour chaque frame.
@@ -268,10 +265,13 @@ De bons résultats sur la vidéo de PL.
 Mauvais résultats sur les autres vidéos.
 
 *** Conclusion sur ces méthodes
+[[file:res_orb.png]]
+Les résultats ne sont pas bons sur toutes les vidéos.
 Le gros inconvénient de ces méthodes est le caractère arbitraire de la sélection du groupe de logo après le clustering.
 En effet, nous faisons l'hypothése qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.
-
 De plus, l'algorithme d'extraction de caractèristique ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.
+
+Néanmoins, il est intéressant de remaquer que les résultats avec la fenêtre de frame sont toujours meilleurs que les résultats avec un seul frame.
 
 ** Seconde approche : matching de contours
 Cette méthode différe avec les autres sur un point : au lieu de chercher à différencier les frames logo des frames non-logo, nous allons chercher les frames qui ont des formes en commun dans la vidéo.
@@ -283,10 +283,10 @@ L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son v
 
 
 *** Mosaique de plan
-*** TODO resize img + put them together ie A + B = C
+[[file:mosaique_add.png]]
 Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque plan avec chaque frame des plans voisins.
 
-C'est pourquo, pour chaque shot deux images au format .png (et non au format jpg, car celui-ci prend trop d'espace disque) sont générées.
+C'est pourquoi, pour chaque shot deux images au format .png (et non au format jpg, car celui-ci prend trop d'espace disque) sont générées.
 
 Chaque image est de dimension I * I * width * height où I est le nombre de frame dans le shot.
 
@@ -323,14 +323,16 @@ Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur 
 
 *** Résultats
 
-*** TODO : mettre les résultats ici
+[[file:res_match_contour.png]]
+Après avoir fait plusieurs essais avec des paramètres différents à chaque fois, nous ne sommes pas parvenus à trouver une combinaison telle qu'il n'y ait aucun faux positif et aucun faux négatif.
+Néanmoins, si seuil d'acceptance des logos est assez élevé, l'algorithme ne retourne aucun faux positif. 
+Ceci nous servira par la suite pour obtenir des images de logos dans les vidéos.
 Concernant le temps d’exécution, celui-ci est relié presque entièrement à la taille de la vidéo donnée en entrée, ainsi qu’à la taille des mosaiques.
 
 Les limitations de notre méthode sont les suivantes :
 - Dans certaines vidéos, il n’y a pas de logo pour les replays (simple fondu)
 - Dans certaines vidéos, les logo de début et fin de replay ne sont pas les mêmes.
 - Dans certains vidéos, il y a des logo au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
-
 
 *** Conclusion sur cette méthode
 Cette méthode présente les avantages suivants :
