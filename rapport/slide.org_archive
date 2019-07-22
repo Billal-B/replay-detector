@@ -1,0 +1,19 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/billal/Memoire/rapport/slide.org
+
+
+* CNN : intéraction parcimonieuse
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2019-07-17 Wed 14:31
+  :ARCHIVE_FILE: ~/Memoire/rapport/slide.org
+  :ARCHIVE_OLPATH: Réseaux usuels
+  :ARCHIVE_CATEGORY: slide
+  :END:
+#+CAPTION: Intéraction parcimonieuse (en haut), intéraction non parcimonieuse (en bas) label:sparse-vs-dense
+#+ATTR_LATEX: :width 4cm
+[[file:sparse_vs_dense.png]]
+- taille kernel < taille entrée
+- le kernel ne parcourt qu'une petite partie de l'entrée à la fois
+
