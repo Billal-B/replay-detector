@@ -12,14 +12,15 @@ case class Replay(begin : Int, end: Int)
 
 
 trait Configuration {
-  def videoName = "C:\\Users\\Billal\\Projet\\Memoire\\video.mp4"
-  def frameToAnalyse: Int = 20000
+  def videoName = "video.mp4"
+  def frameToAnalyse: Int = Int.MaxValue
   def startFrame: Int = 0
   def videoWidth: Int = 100
   def videoHeight: Int = 100
   def knownLogo: Boolean = true // todo : move this (conf module)
-  def saveWindowSize = 1 // should be a multiple of 2
-  def numberOfWindow = 10
+  def mosaicSize = 1 // mosaic is a matrix of size mosaicWidth * mosaicWidth
+  def numberOfMosaic = 10
+  def saveWindowSize2 = 10
   def uploadToS3 = false
 
   def runId:String = new Timestamp(System.currentTimeMillis())
@@ -98,7 +99,6 @@ object Main extends App with Configuration {
 
     val logos = if (knownLogo) replayDetector.matchKnownLogo(foundShots) else {
       val _logos = replayDetector.findLogo(foundShots)
-      replayDetector.saveBestLogoShots(_logos)
       _logos
     }
     val computeLogoTime = System.currentTimeMillis() - saveShotTime - t
@@ -120,7 +120,7 @@ object Main extends App with Configuration {
         val logosToSave =
           if (knownLogo) logos.map(_.index)
           else logos.flatMap(l => Vector(l.index, l.matches))
-        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId))
+        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId + "/"), saveWindowSize2)
       }
 
     println("Time total : " + (System.currentTimeMillis() - t))

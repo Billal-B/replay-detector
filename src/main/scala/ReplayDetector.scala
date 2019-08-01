@@ -20,17 +20,17 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
   private val fps: Int = math.round(capture.get(CAP_PROP_FPS)).toInt
 
   // logo detection parameters
-  private val mosaicBorderSize = 2
-  private val (mosaicWidth, mosaicHeight) = (0.81 * videoWidth + mosaicBorderSize * 2, 0.81 * videoHeight + mosaicBorderSize * 2) // todo : check  "+ mosaicBorderSize * 2"
+  private val mosaicBorderSize: Int = 2
+  private val (mosaicWidth, mosaicHeight) = ((0.81 * videoWidth + mosaicBorderSize * 2).toInt, (0.81 * videoHeight + mosaicBorderSize * 2).toInt)
 
 
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
   private val minLogoSegmentLength = mosaicHeight / 4
-  private val logoThreshold = saveWindowSize * 1000
+  private val logoThreshold = mosaicWidth * 1000
   private val knownLogoThreshold = 2
 
-  println(s"Save window size : $saveWindowSize")
+  println(s"Save window size : $mosaicWidth")
   println("Logo threshold : " + logoThreshold)
   println("Min logo segment length : " + minLogoSegmentLength)
 
@@ -271,10 +271,10 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     def writeShotMosaic(shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat]) = {
       // first, we save the frames in the window before the shot transition
 
-      val framePosition = shotIdx - saveWindowSize // half of the frame in the window are behind the current index
+      val framePosition = shotIdx - mosaicWidth // half of the frame in the window are behind the current index
       capture.set(CAP_PROP_POS_FRAMES, framePosition)
       // all the border detected in the frames
-      val edges: Seq[Mat] = (0 until saveWindowSize).map { i =>
+      val edges: Seq[Mat] = (0 until mosaicWidth).map { i =>
         val frame: Mat = new Mat()
         capture.read(frame)
         val resized = new Mat()
@@ -299,7 +299,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       }
       val shiftEdgesFrame = new Mat()
       val normalEdgesFrame = new Mat()
-      val shiftEdges = (0 until saveWindowSize).map { i =>
+      val shiftEdges = (0 until mosaicWidth).map { i =>
         val shiftEdge = new Mat()
         val edge = edges.indices.map { j =>
           edges( (i + j) % edges.size)
@@ -307,7 +307,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
         hconcat(edge.asJava, shiftEdge)
         shiftEdge
       }
-      val normalEdges = (0 until saveWindowSize).map { i =>
+      val normalEdges = (0 until mosaicWidth).map { i =>
         val normalEdge = new Mat()
         hconcat(edges.asJava, normalEdge)
         normalEdge
@@ -337,7 +337,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     val backgroundSize = 1
 
     for {(_shotIdx, i) <- shotIdxs.zipWithIndex} {
-      for (shotIdx <- (0 to numberOfWindow).map(_ + _shotIdx)) {
+      for (shotIdx <- (0 to numberOfMosaic).map(_ + _shotIdx)) {
         val nextBackgroundFrames = shotIdxs.lift(i + 1).toVector.flatMap { nextShotIdx => // We remove from the current frame the frames in the middle of the current shot and of the next shot
           // We need to make sure that we don't take frames outside of the next shot (hence the min)
           // or frame that could be logo frame (hence the + fps, because a logo roughly last for 1 second)
