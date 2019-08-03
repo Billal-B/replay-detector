@@ -7,7 +7,7 @@ import org.opencv.imgcodecs.Imgcodecs._
 import org.opencv.imgproc.Imgproc._
 import org.opencv.core.Core._
 import org.opencv.core.CvType._
-import org.opencv.core.{Mat, MatOfPoint2f, Scalar, Size}
+import org.opencv.core.{Mat, MatOfPoint, MatOfPoint2f, Scalar, Size}
 import org.opencv.videoio.VideoCapture
 
 
@@ -27,10 +27,10 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
   private val minLogoSegmentLength = mosaicHeight / 4
-  private val logoThreshold = mosaicWidth * 1000
+  private val logoThreshold = mosaicSize * 1000
   private val knownLogoThreshold = 2
 
-  println(s"Save window size : $mosaicWidth")
+  println(s"Save window size : $mosaicSize")
   println("Logo threshold : " + logoThreshold)
   println("Min logo segment length : " + minLogoSegmentLength)
 
@@ -97,11 +97,11 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
 
     val score = collection.mutable.Map.empty[(Int, Int), Double] // todo: find better data structure than Map
     val totScore = collection.mutable.Map.empty[Int, Double] // todo: find better data structure than Map
-    for (idx <- 0 until contours.size()) {
+    for (idx <- 0 until contours.size().toInt) {
       // val contourX:Int = contour(new Range(0,0))(1)
-      val contourX = contours.get(0).get(1,0)(0)
-      val contourY = contours.get(0).get(0,0)(0)
-      val x:Int = (contourX / mosaicWidth).toInt
+      val contourX = contours.get(idx).get(1,0)(0)
+      val contourY = contours.get(idx).get(0,0)(0)
+      val x:Int = (contourX / mosaicWidth).toInt // a mosaic is a matrix of dim U * V; an area (a square) in the mosaic is represented by two integers x and y
       val y:Int = (contourY / mosaicHeight).toInt
 
       val contour = new MatOfPoint2f()
@@ -271,10 +271,10 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     def writeShotMosaic(shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat]) = {
       // first, we save the frames in the window before the shot transition
 
-      val framePosition = shotIdx - mosaicWidth // half of the frame in the window are behind the current index
+      val framePosition = shotIdx - mosaicSize // half of the frame in the window are behind the current index
       capture.set(CAP_PROP_POS_FRAMES, framePosition)
       // all the border detected in the frames
-      val edges: Seq[Mat] = (0 until mosaicWidth).map { i =>
+      val edges: Seq[Mat] = (0 until mosaicSize).map { i =>
         val frame: Mat = new Mat()
         capture.read(frame)
         val resized = new Mat()
@@ -299,7 +299,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       }
       val shiftEdgesFrame = new Mat()
       val normalEdgesFrame = new Mat()
-      val shiftEdges = (0 until mosaicWidth).map { i =>
+      val shiftEdges = (0 until mosaicSize).map { i =>
         val shiftEdge = new Mat()
         val edge = edges.indices.map { j =>
           edges( (i + j) % edges.size)
@@ -307,7 +307,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
         hconcat(edge.asJava, shiftEdge)
         shiftEdge
       }
-      val normalEdges = (0 until mosaicWidth).map { i =>
+      val normalEdges = (0 until mosaicSize).map { i =>
         val normalEdge = new Mat()
         hconcat(edges.asJava, normalEdge)
         normalEdge
@@ -321,8 +321,8 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
         IMWRITE_PNG_BILEVEL, 1
       )
       */
-      imwrite(shotFolder + "A/" + framePosition + ".png", shiftEdgesFrame/*, parameters*/)
-      imwrite(shotFolder + "B/" + framePosition + ".png", normalEdgesFrame/*, parameters*/) // todo: remove this in 'prod'
+      imwrite(shotFolder + "A/" + shotIdx + ".png", shiftEdgesFrame/*, parameters*/)
+      imwrite(shotFolder + "B/" + shotIdx + ".png", normalEdgesFrame/*, parameters*/) // todo: remove this in 'prod'
       shiftEdgesFrame.release()
       normalEdgesFrame.release()
       //parameters.release()

@@ -35,12 +35,16 @@ object OpenCvUtils {
     if (! new File(folder).exists()) {
       new File(folder).mkdir()
     }
+    // creating the subfolder
+    if (info.isDefined && ! new File(folder+ info.getOrElse("")).exists()) {
+      new File(folder+ info.getOrElse("")).mkdir()
+    }
     frameIdxs.foreach{idx =>
       for (i <- 0 to saveSize) {
         val frame = new Mat()
         capture.set(CAP_PROP_POS_FRAMES, idx)
         capture.read(frame)
-        imwrite(folder + info.getOrElse("") + "_" + idx + "_" + "i" +".png", frame)
+        imwrite(folder + info.getOrElse("") + idx + "_" + i +".png", frame)
       }
     }
   }

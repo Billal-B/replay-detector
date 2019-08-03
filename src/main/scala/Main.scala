@@ -13,14 +13,14 @@ case class Replay(begin : Int, end: Int)
 
 trait Configuration {
   def videoName = "video.mp4"
-  def frameToAnalyse: Int = Int.MaxValue
-  def startFrame: Int = 0
+  def frameToAnalyse: Int = 1000
+  def startFrame: Int = 5000
   def videoWidth: Int = 100
   def videoHeight: Int = 100
-  def knownLogo: Boolean = true // todo : move this (conf module)
-  def mosaicSize = 1 // mosaic is a matrix of size mosaicWidth * mosaicWidth
-  def numberOfMosaic = 10
-  def saveWindowSize2 = 10
+  def knownLogo: Boolean = false // todo : move this (conf module)
+  def mosaicSize = 10 // mosaic is a matrix of size mosaicWidth * mosaicWidth
+  def numberOfMosaic = 1
+  def saveWindowSize = 10
   def uploadToS3 = false
 
   def runId:String = new Timestamp(System.currentTimeMillis())
@@ -120,7 +120,7 @@ object Main extends App with Configuration {
         val logosToSave =
           if (knownLogo) logos.map(_.index)
           else logos.flatMap(l => Vector(l.index, l.matches))
-        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId + "/"), saveWindowSize2)
+        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId + "/"), saveWindowSize)
       }
 
     println("Time total : " + (System.currentTimeMillis() - t))
