@@ -13,14 +13,14 @@ case class Replay(begin : Int, end: Int)
 
 trait Configuration {
   def videoName = "video.mp4"
-  def frameToAnalyse: Int = 1000
+  def frameToAnalyse: Int = 20000
   def startFrame: Int = 5000
   def videoWidth: Int = 100
   def videoHeight: Int = 100
   def knownLogo: Boolean = false // todo : move this (conf module)
-  def mosaicSize = 10 // mosaic is a matrix of size mosaicWidth * mosaicWidth
+  def mosaicSize = 20 // mosaic is a matrix of size mosaicWidth * mosaicWidth
   def numberOfMosaic = 1
-  def saveWindowSize = 10
+  def saveWindowSize = mosaicSize
   def uploadToS3 = false
 
   def runId:String = new Timestamp(System.currentTimeMillis())

@@ -42,9 +42,10 @@ object OpenCvUtils {
     frameIdxs.foreach{idx =>
       for (i <- 0 to saveSize) {
         val frame = new Mat()
-        capture.set(CAP_PROP_POS_FRAMES, idx)
+        capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + i)
         capture.read(frame)
         imwrite(folder + info.getOrElse("") + idx + "_" + i +".png", frame)
+        frame.release()
       }
     }
   }

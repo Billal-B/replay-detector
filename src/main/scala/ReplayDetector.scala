@@ -26,8 +26,8 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
 
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
-  private val minLogoSegmentLength = mosaicHeight / 4
-  private val logoThreshold = mosaicSize * 1000
+  private val minLogoSegmentLength = mosaicHeight / 3
+  private val logoThreshold = mosaicSize * 2500
   private val knownLogoThreshold = 2
 
   println(s"Save window size : $mosaicSize")
@@ -90,8 +90,10 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     //Imgproc.GaussianBlur(diff, blurredDiff, new Size(3d,3d), 1,0)
     //Imgproc.threshold(blurredDiff, blurredDiff, 100, 255, Imgproc.THRESH_BINARY)
     contourDiffDilate.foreach(dilateWidth => dilateImg(dilateWidth, blurredDiff))
-    //blurAndThresh(diff)
-    //erodeImg(2 , diff)
+
+    // penalize img with too much white pixels
+    val whiteA = countNonZero(imgA).toDouble / (imgA.width() * imgA.height())
+    val whiteB = countNonZero(imgB).toDouble / (imgB.width() * imgB.height())
 
     val contours = findContours(blurredDiff)
 
@@ -107,7 +109,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       val contour = new MatOfPoint2f()
       contours.get(idx).convertTo(contour, CV_32F)
       val _arcLength = arcLength(contour, true)
-      val arcScore = if (_arcLength > minLogoSegmentLength) _arcLength else 0
+      val arcScore = if (_arcLength > minLogoSegmentLength) _arcLength * (1 - whiteA) * (1 - whiteB) else 0
       val r = score.getOrElse((x,y), 0d) + arcScore
       score.update((x,y), r)
       totScore.update(x, totScore.getOrElse(x, 0d) + r)
@@ -182,37 +184,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     possibleLogoFrames.toVector
   }
 
-
-  private def filterlogo(logoTemplates: Seq[Logo]) = {
-    val possibleLogoFrames = collection.mutable.ArrayBuffer.empty[Logo]
-    val startLogoIdxPool = logoTemplates.groupBy(_.index)
-    val endLogoIdxPool = logoTemplates.groupBy(_.matches)
-    for ((startLogoIdx, matchingFrames) <- startLogoIdxPool) {
-      val startLogoFile = startLogoIdx + "A.png"
-      val startLogoShot = imread("shot/" + startLogoFile, IMREAD_UNCHANGED)
-      var matched = 0
-      for ((endLogoIdx, endLogo) <- endLogoIdxPool)
-        if (math.abs(endLogoIdx - startLogoIdx) > fps * 2 & matched <= 2)
-        {
-          val endLogoFile = endLogoIdx + "B.png"
-          val endLogoShot = imread("shot/" + endLogoFile, IMREAD_UNCHANGED)
-          val res = contourDiff(startLogoShot, endLogoShot)
-          if (res > logoThreshold * 2 ) {
-            matched += 1
-          }
-          endLogoShot.release()
-        }
-      if (matched > 2) {
-        possibleLogoFrames += matchingFrames.minBy(logo => logo.matches - startLogoIdx)
-        println(s"$startLogoIdx matched $matched")
-      }
-      startLogoShot.release()
-    }
-    possibleLogoFrames.toVector
-  }
-
-
-  def findReplay(foundLogos: Vector[Logo]) = {
+  def findReplay(foundLogos: Vector[Logo]): Vector[Logo] = {
     foundLogos.groupBy(l => l.index).map{
       case (idx, logos) =>
         logos.minBy(logo => logo.matches - idx)
@@ -220,7 +192,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
   }
 
 
-  def findLogo(shotIdxs: Seq[Int]) = {
+  def findLogo(shotIdxs: Seq[Int]): Vector[Logo] = {
     val possibleLogoFrames = collection.mutable.Set.empty[Logo]
     val sortedShots = shotIdxs.sorted
     for (shotAIdx <- sortedShots) {
@@ -238,7 +210,35 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       }
       shotA.release()
     }
-    possibleLogoFrames.toVector
+    val doubleCheck = true
+    if (doubleCheck) {
+      for (logo <- possibleLogoFrames) {
+        val othersNonMatchedLogos = (possibleLogoFrames - logo).filterNot(_.index == logo.matches).toVector
+        // we ensure that at least another N match
+        val atLeastNOtherMatch = existsN(othersNonMatchedLogos, {otherLogo: Logo =>
+          val shotALogo = imread("shot/A/" + logo.index + ".png", IMREAD_UNCHANGED)
+          val shotBOtherLogo = imread("shot/B/" + otherLogo.index + ".png", IMREAD_UNCHANGED)
+          val score = contourDiff(shotALogo, shotBOtherLogo, logo.index + "_" + otherLogo.index)
+          shotALogo.release()
+          shotBOtherLogo.release()
+          score > logoThreshold
+        }, 10)
+        if (! atLeastNOtherMatch) possibleLogoFrames -= logo
+      }
+      possibleLogoFrames.toVector
+    }
+    else possibleLogoFrames.toVector
+  }
+
+  private def existsN[A](seq: Vector[A], pred: A => Boolean, n: Int): Boolean = {
+    if (n == 0) true
+    else {
+      seq match {
+        case Vector() => false
+        case head +: tail =>
+          existsN(tail, pred, if (pred(head)) n - 1 else n)
+      }
+    }
   }
 
 
@@ -337,7 +337,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     val backgroundSize = 1
 
     for {(_shotIdx, i) <- shotIdxs.zipWithIndex} {
-      for (shotIdx <- (0 to numberOfMosaic).map(_ + _shotIdx)) {
+      for (shotIdx <- (0 until numberOfMosaic).map(_ + _shotIdx)) {
         val nextBackgroundFrames = shotIdxs.lift(i + 1).toVector.flatMap { nextShotIdx => // We remove from the current frame the frames in the middle of the current shot and of the next shot
           // We need to make sure that we don't take frames outside of the next shot (hence the min)
           // or frame that could be logo frame (hence the + fps, because a logo roughly last for 1 second)
