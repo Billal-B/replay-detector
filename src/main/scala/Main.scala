@@ -5,19 +5,22 @@ import org.opencv.core.{Core, Mat}
 import org.opencv.videoio.VideoCapture
 import org.opencv.videoio.Videoio._
 
+import scala.util.Try
+
 
 case class Frame(index: Int, matrix: Mat, hist: Option[Mat] = None, accDiff: Double = 0.0, orbResult: Option[Mat] = None)
-case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
+case class Logo(index: Int, score: Int, tag:Option[String] = None)
 case class Replay(begin : Int, end: Int)
 
 
 trait Configuration {
   def videoName = "video.mp4"
-  def frameToAnalyse: Int = 20000
-  def startFrame: Int = 5000
+  def logoTag = Option("liga")
+  def frameToAnalyse: Int = 5000
+  def startFrame: Int = 10000
   def videoWidth: Int = 100
   def videoHeight: Int = 100
-  def knownLogo: Boolean = false // todo : move this (conf module)
+  def knownLogo: Boolean = true // todo : move this (conf module)
   def mosaicSize = 20 // mosaic is a matrix of size mosaicWidth * mosaicWidth
   def numberOfMosaic = 1
   def saveWindowSize = mosaicSize
@@ -38,7 +41,8 @@ object Main extends App with Configuration {
   System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
   setup()
   val filename = args.headOption getOrElse videoName
-  replayDetection(filename)
+  val knownLogoTag = Try(args(1)).toOption.orElse(logoTag)
+  replayDetection(filename, knownLogoTag)
   if (uploadToS3) {
     uploadLogosToS3()
     uploadKnownLogoToS3()
@@ -79,7 +83,8 @@ object Main extends App with Configuration {
     }
   }
 
-  def replayDetection(filename: String) = {
+  def replayDetection(filename: String, knownLogoTag: Option[String]) = {
+    knownLogoTag.foreach(t => println("Known logo : " + t))
     val capture: VideoCapture = new VideoCapture(filename)
     val fps: Double = capture.get(CAP_PROP_FPS)
     val t = System.currentTimeMillis()
@@ -97,31 +102,25 @@ object Main extends App with Configuration {
     val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
     println("Time to save shot: " + saveShotTime)
 
-    val logos = if (knownLogo) replayDetector.matchKnownLogo(foundShots) else {
-      val _logos = replayDetector.findLogo(foundShots)
-      _logos
+
+    val logos = knownLogoTag match {
+      case Some(tag)=> replayDetector.matchKnownLogo(foundShots, tag)
+      case None => replayDetector.findLogo(foundShots)
     }
+
     val computeLogoTime = System.currentTimeMillis() - saveShotTime - t
     println("Time to find logo : " + computeLogoTime)
 
-    val replays = replayDetector.findReplay(logos)
-
-    replayDetector.createPlayList(foundShots, replays, filename).sortBy(_.index).foreach { r =>
-      println(s"Replay (at ${r.index} - ${r.matches}) " +
-        s" from ${(r.index/fps/60).toInt}m ${(r.index/fps%60).toInt}s" +
-        s" to ${(r.matches/fps/60).toInt}m ${(r.matches/fps%60).toInt}s")
-    }
 
     println("Saving " + logos.length + " logo frames")
 
     logos
       .groupBy(_.tag)
       .foreach{case (optTag, logos) =>
-        val logosToSave =
-          if (knownLogo) logos.map(_.index)
-          else logos.flatMap(l => Vector(l.index, l.matches))
-        OpenCvUtils.saveFrames(capture, logosToSave, "frame/" + optTag.getOrElse("unk") + "/", Some(runId + "/"), saveWindowSize)
+        OpenCvUtils.saveFrames(capture, logos.map(_.index), "frame/" + optTag.getOrElse("unk") + "/", Some(runId + "/"), saveWindowSize)
       }
+
+    replayDetector.saveBestLogoShots(logos)
 
     println("Time total : " + (System.currentTimeMillis() - t))
 

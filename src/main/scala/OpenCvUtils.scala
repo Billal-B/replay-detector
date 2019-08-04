@@ -9,6 +9,7 @@ import org.opencv.core.Core._
 import org.opencv.core.CvType._
 import org.opencv.core.{Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
 import org.opencv.videoio.VideoCapture
+import org.opencv.video.Video.calcOpticalFlowFarneback
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
@@ -30,23 +31,69 @@ object OpenCvUtils {
     contours
   }
 
-  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String, info: Option[String] = None, saveSize: Int = 0): Unit = {
+  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String, tag: Option[String] = None, saveSize: Int = 0): Unit = {
     // creating the folder
     if (! new File(folder).exists()) {
       new File(folder).mkdir()
     }
+    val logoFolder = new File(folder)
     // creating the subfolder
-    if (info.isDefined && ! new File(folder+ info.getOrElse("")).exists()) {
-      new File(folder+ info.getOrElse("")).mkdir()
-    }
+    new File(logoFolder.getCanonicalPath + "/" + tag.getOrElse("no_tag")).mkdir()
+    val logoSubfolder = new File(logoFolder.getCanonicalPath + "/" + tag.getOrElse("no_tag"))
+
     frameIdxs.foreach{idx =>
-      for (i <- 0 to saveSize) {
+      new File(logoSubfolder.getCanonicalPath + "/" + idx).mkdir()
+      val indexDir = new File(logoSubfolder.getCanonicalPath + "/" + + idx)
+
+      var prevFrame = new Mat()
+      capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + 0)
+      capture.read(prevFrame)
+      imwrite(indexDir.getCanonicalPath + "/" + "0" +".png", prevFrame)
+
+      for (i <- 1 to saveSize) {
         val frame = new Mat()
         capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + i)
         capture.read(frame)
-        imwrite(folder + info.getOrElse("") + idx + "_" + i +".png", frame)
-        frame.release()
+        imwrite(indexDir.getCanonicalPath + "/" + i +".png", frame)
+        // calc the optical flow
+        calcOpticalFlow(prevFrame, frame, indexDir.getCanonicalPath + "/" + i +"_flow.png")
+
+        prevFrame = frame
       }
+    }
+  }
+
+  private def calcOpticalFlow(prevFrame: Mat, currentFrame: Mat, filename: String): Unit = {
+    val magnitude = new Mat()
+    val angle = new Mat()
+
+    val grayedPrev = new Mat()
+    cvtColor(prevFrame, grayedPrev, COLOR_RGB2GRAY)
+    val grayedCurrent = new Mat()
+    cvtColor(currentFrame, grayedCurrent, COLOR_RGB2GRAY)
+    val flow = new Mat()
+    calcOpticalFlowFarneback(grayedPrev, grayedCurrent, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
+
+    drawOptFlowMap(flow, grayedPrev, 16, 1.5, new Scalar(0d, 255d, 0d))
+
+    grayedPrev.release()
+    grayedCurrent.release()
+
+    imwrite(filename, flow)
+  }
+
+  // see : https://github.com/opencv/opencv/blob/master/samples/cpp/fback.cpp#L20
+  def drawOptFlowMap(flow: Mat,cflowmap: Mat,step: Int ,scale: Double, color: Scalar) =
+  {
+    for {
+      y <- 0 until cflowmap.rows()
+      x <- 0 until cflowmap.cols()
+    } {
+
+      val point = flow.get(y, x)
+      line(cflowmap, new Point(x,y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
+        color)
+      circle(cflowmap, new Point(x,y), 2, color, -1)
     }
   }
 
