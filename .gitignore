@@ -11,3 +11,6 @@ lib/opencv_java342.dll
 lib/opencv_ffmpeg342_64.dll
 video.mp4
 ReplayDetector.jar
+frame
+preprocess
+video*

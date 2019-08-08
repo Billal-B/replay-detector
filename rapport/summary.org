@@ -529,6 +529,13 @@ Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:
 Pour chaque séquence d'images comprise entre deux plans, le flux optique va être calculé pour celle-ci (entre l'image au début de la séquence et l'image à la fin de la séquence) puis une image va être générée.
 Le réseau va apprendre à classifier les séquences en logo/non-logo à partir de ces images de flux optique.
 #+LATEX: \newpage
+*** Obtention des images de flux optiques
+Pour obtenir les images de flux optiques, nous allons utiliser notre algorithme de détection de logo par matching de contours.
+Celui-ci va détecter les plans contenant les logos, chaque plan contiendra plusieurs images de logos se mouvant dans la vidéo.
+Pour calculer le flux optique dans le plan, nous allons calculer le flux optique deux à deux des images consécutives dans le plan, puis faire la somme de tous les vecteurs de flux optiques. Ainsi, nous obtiendrons un seul vecteur représentant le déplacement des objets dans le plan.
+**** todo img flux optique deux a deux 
+
+
 * Collecte des données & entraînement
 ** Datasets
 L'objectif de la collecte de données est d'obtenir les ensembles de données suivants :

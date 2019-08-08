@@ -52,7 +52,7 @@ class ShotDetector(capture: VideoCapture) extends Configuration {
     val vt = new Mat()
 
     histograms.foreach {
-      case ((hHist, sHist, vHist)) =>
+      case (hHist, sHist, vHist) =>
         val hists = new Mat()
         hconcat(List(hHist, sHist, vHist).asJava, hists) // todo : use java list instead of asJava
         xt.push_back(hists.reshape(0, 1))
@@ -60,7 +60,7 @@ class ShotDetector(capture: VideoCapture) extends Configuration {
     SVDecomp(xt, w, u, vt)
 
     val bestSvalue = w.get(0,0)(0)
-    val res = (0 until windowSize).foldLeft(0) { // todo : replace windowSize by histograms.length
+    val res = (0 until windowSize).foldLeft(0) {
       case (tot, idx) =>
         val sValue = w.get(idx, 0)(0)
         if (sValue / bestSvalue > threshold) tot + 1

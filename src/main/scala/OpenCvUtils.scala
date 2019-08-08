@@ -7,7 +7,7 @@ import org.opencv.imgcodecs.Imgcodecs._
 import org.opencv.imgproc.Imgproc._
 import org.opencv.core.Core._
 import org.opencv.core.CvType._
-import org.opencv.core.{Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
+import org.opencv.core.{Core, Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
 import org.opencv.videoio.VideoCapture
 import org.opencv.video.Video.calcOpticalFlowFarneback
 
@@ -50,51 +50,61 @@ object OpenCvUtils {
       capture.read(prevFrame)
       imwrite(indexDir.getCanonicalPath + "/" + "0" +".png", prevFrame)
 
-      for (i <- 1 to saveSize) {
+      val framesToSave = (1 to saveSize).map {i =>
         val frame = new Mat()
         capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + i)
         capture.read(frame)
+        frame
+      }.toVector
+
+      if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/" + "flow.png")
+
+      framesToSave.zipWithIndex.foreach{case (frame, i) =>
         imwrite(indexDir.getCanonicalPath + "/" + i +".png", frame)
-        // calc the optical flow
-        calcOpticalFlow(prevFrame, frame, indexDir.getCanonicalPath + "/" + i +"_flow.png")
-
-        prevFrame = frame
       }
+
+      framesToSave.foreach(_.release())
     }
   }
 
-  private def calcOpticalFlow(prevFrame: Mat, currentFrame: Mat, filename: String): Unit = {
-    val magnitude = new Mat()
-    val angle = new Mat()
+  private def calcOpticalFlow(frames: Vector[Mat], filename: String): Unit = {
+    val accumulatedOpticalFlow = for {
+      idx <- 0 until (frames.length - 1)
+    } yield {
+      val prevFrame = frames(idx)
+      val currentFrame = frames(idx + 1)
+      val flow = new Mat()
+      val grayedPrev = new Mat()
+      cvtColor(prevFrame, grayedPrev, COLOR_RGB2GRAY)
+      val grayedCurrent = new Mat()
+      cvtColor(currentFrame, grayedCurrent, COLOR_RGB2GRAY)
 
-    val grayedPrev = new Mat()
-    cvtColor(prevFrame, grayedPrev, COLOR_RGB2GRAY)
-    val grayedCurrent = new Mat()
-    cvtColor(currentFrame, grayedCurrent, COLOR_RGB2GRAY)
-    val flow = new Mat()
-    calcOpticalFlowFarneback(grayedPrev, grayedCurrent, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
+      calcOpticalFlowFarneback(grayedPrev, grayedCurrent, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-    drawOptFlowMap(flow, grayedPrev, 16, 1.5, new Scalar(0d, 255d, 0d))
+      grayedPrev.release()
+      grayedCurrent.release()
+      flow
+    }
 
-    grayedPrev.release()
-    grayedCurrent.release()
+    val framesOpticalFlow = accumulatedOpticalFlow.reduce{(prevFlow, currentFlow) =>
+      val cumulator = new Mat()
+      Core.add(prevFlow, currentFlow, cumulator)
+      cumulator
+    }
 
-    imwrite(filename, flow)
-  }
-
-  // see : https://github.com/opencv/opencv/blob/master/samples/cpp/fback.cpp#L20
-  def drawOptFlowMap(flow: Mat,cflowmap: Mat,step: Int ,scale: Double, color: Scalar) =
-  {
+    val color = new Scalar(0d, 255d, 0d)
+    val step = 16
     for {
-      y <- 0 until cflowmap.rows()
-      x <- 0 until cflowmap.cols()
+      y <- 0 until framesOpticalFlow.rows() by step
+      x <- 0 until framesOpticalFlow.cols() by step
     } {
-
-      val point = flow.get(y, x)
-      line(cflowmap, new Point(x,y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
+      val point = framesOpticalFlow.get(y, x)
+      line(framesOpticalFlow, new Point(point), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
         color)
-      circle(cflowmap, new Point(x,y), 2, color, -1)
     }
+
+    imwrite(filename, framesOpticalFlow)
+
   }
 
   /*
@@ -127,14 +137,14 @@ object OpenCvUtils {
     calcHist(hsvImg, 1, channel0, mask, hHist, 45, binSize, ranges) // todo : use java default list instead of asJava + remove javaConverter deps
     calcHist(List(hsvImg).asJava, channel1, mask, sHist, histSize, ranges)
     calcHist(List(hsvImg).asJava, channel2, mask, vHist, histSize, ranges)
-
+*/
     ranges.release()
     histSize.release()
     hsvImg.release()
     channel0.release()
     channel1.release()
     channel2.release()
-    */
+
     mask.release()
     hsvImg.release()
 
