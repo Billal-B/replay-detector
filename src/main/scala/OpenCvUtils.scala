@@ -57,7 +57,7 @@ object OpenCvUtils {
         frame
       }.toVector
 
-      if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/" + "flow.png")
+      //if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/" + "flow.png")
 
       framesToSave.zipWithIndex.foreach{case (frame, i) =>
         imwrite(indexDir.getCanonicalPath + "/" + i +".png", frame)

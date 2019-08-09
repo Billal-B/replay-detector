@@ -26,8 +26,8 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
 
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
-  private val minLogoSegmentLength = mosaicHeight / 2
-  private val logoThreshold = mosaicSize * 1000 // !!! the logo threshold is dependant of the size of the image (the countours are bigger in a 200*200 img than in a 100*100 img)
+  private val minLogoSegmentLength = mosaicHeight / 4
+  private val logoThreshold = mosaicSize * 2000 // !!! the logo threshold is dependant of the size of the image (the countours are bigger in a 200*200 img than in a 100*100 img)
   private val knownLogoThreshold = 2 // the number of known logo that must match
 
   println(s"Save window size : $mosaicSize")
@@ -292,7 +292,8 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
 
     for {(shotIdx, i) <- shotIdxs.zipWithIndex} {
 
-      val nextBackgroundFrames = shotIdxs.lift(i + 1).toVector.flatMap { nextShotIdx => // We remove from the current frame the frames in the middle of the current shot and of the next shot
+      val nextBackgroundFrames = {
+        // We remove from the current frame the frames in the middle of the current shot and of the next shot
         // We need to make sure that we don't take frames outside of the next shot (hence the min)
         // or frame that could be logo frame (hence the + fps, because a logo roughly last for 1 second)
         //val nextFrameBackgroundIdx = ((shotIdx + nextShotIdx) / 2).toInt
@@ -308,14 +309,13 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       //val previousBackgroundFrameIndex = ((shotIdx - fps + previousShotIdx) / 2).toInt
       val previousBackgroundFrameIndex = shotIdx - (fps * 2 / 3).toInt - backgroundSize
       val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
-      if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat] else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
+      //val s = if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat] else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
 
-      writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames, shotFolder) // TODO : reenable nextBGframes ?
+      writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames, shotFolder)
       previousShotIdx = shotIdx
 
       //nextBackgroundFrames.foreach(_.release())
       previousBackgroundFrames.foreach(_.release())
-
     }
   }
 
@@ -327,7 +327,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     // We want to save frames surrounding the shot transition (half of them in shot S_t and half of them in shot S_t+1 ideally)
     // The frames before the shot transition are those before the current index and the frames after the shot transition
     // are those after the current shot index (shotIdx should ideally be the exact moment between two shots).
-    val framePosition = shotIdx - mosaicSize // TODO : check if framePosition = shotIdx - mosaicSize / 2 isn't better
+    val framePosition = shotIdx - (mosaicSize / 2) // TODO : check if framePosition = shotIdx - mosaicSize / 2 isn't better
     capture.set(CAP_PROP_POS_FRAMES, framePosition)
     // all the border detected in the frames
     val contours: Seq[Mat] = (0 until mosaicSize).map { _ =>
@@ -335,8 +335,9 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
       capture.read(frame)
       val resized = new Mat()
       resize(frame, resized, new Size(videoWidth, videoHeight))
+      // we crop so we don't have static info such as a scoreboard on the image (because they're usually on the edge of the screen)
       val cropped: Mat = cropImage(resized)
-
+      val blurred = new Mat()
       // detects the contour in the frame
       val contoursWithBackground = makeCountoursFrame(cropped, minLogoSegmentLength)
       // we remove the background to remove the still pixels in the frame (a logo is supposed to move, so still

@@ -17,9 +17,9 @@ import scala.util.Try
 case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 
 trait Configuration {
-  def videoName = "video4.mp4" // the video to parse
+  def videoName = "video.mp4" // the video to parse
   def logoTag = None // the known logo tag to use if searching in the known logo database, if none, don't search in the logo DB but only between consecutive shots
-  def frameToAnalyse: Int = 2000 // the number of frame to analyze in the video
+  def frameToAnalyse: Int = 40000 // the number of frame to analyze in the video
   def startFrame: Int = 11000 // the frame in the video where the parsing begin
   def videoWidth: Int = 100 // the width to resize the video to before doing the parsing
   def videoHeight: Int = 100 // the height to resize the video to before doing the parsing
@@ -30,7 +30,7 @@ trait Configuration {
   val normalMosaicFolderName  = mosaicParentFolderName + "B/"
 
   // todo : use this wherever possible
-  val debugMode: Boolean = false
+  val debugMode: Boolean = true
   /**
     * Mosaic :
     * Before searching for logos, the shots are detected. Because the logos are at the transition between two shots,
@@ -125,13 +125,13 @@ object Main extends App with Configuration {
 
     replayDetector.createPlayList(foundShots, filename, logos = logos)
 
-    println("Saving " + logos.length + " logo frames")
+    println("Saving " + logos.map(_.index).distinct.size + " logo frames")
 
 
     logos
       .groupBy(_.tag)
-      .foreach{case (optTag, logos) =>
-        OpenCvUtils.saveFrames(capture, logos.map(_.index), frameFolderName + optTag.getOrElse("unk") + "/", Some(runId + "/"), mosaicSize)
+      .foreach{case (optTag, logosForTag) =>
+        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, frameFolderName + optTag.getOrElse("unk") + "/", Some(runId + "/"), mosaicSize)
       }
 
     println("Time total : " + (System.currentTimeMillis() - t))

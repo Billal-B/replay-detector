@@ -9,6 +9,15 @@
 
 #+OPTIONS: \n:t
 #+LATEX: \newpage
+* TODO vérif un frame vs une frame
+* TODO faire la distinction plan / transition de plan
+parfois je parle de plan alors que je ne regarde que la transition entre les plan (par ex, avec ORB)
+* TODO plus détaillé la partie détection de contours
+rajouter des images :
+1) le shot (avec les images couleurs)
+2) shot => contours
+3) contours => mosaic
+4) match mosaic
 * Sportagraph
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R&D).
 Son produit est un DAM (Digital Asset Manager) spéecialisé dans les événements sportifs.
@@ -42,7 +51,7 @@ Plus particulièrement, nous focalisons notre recherche sur les vidéos de sport
 
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.
 
-*Pourquoi les replays ?* Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.
+*Pourquoi les replays ?* Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
 En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, un replay est une annotation humaine sur une vidéo.
 Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
@@ -72,15 +81,15 @@ Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est prés
 Tous les frames qui ont obtenu un score supérieur à un certain seuil sont considérés comme des candidats pour être le /logo template/.
 Le /logo template/ est le logo qui représente le mieux les logos dans la vidéo et c'est celui-ci qui va servir de référence pour trouver tous les logos.
 
-*** Calcul du score de la luminance et filtrage des frames
+*** Calcul du score de la luminance et filtrage des frames  
 L'idée est de parcourir toute la vidéo et de calculer pour chaque frame la différence de luminance qu'il y a entre ce frame et les 17 frames précédents.
 Nous obtenons un score L_i pour chaque frame i dans la vidéo.
 Tous les frames dont le score est inférieur à un certain seuil sont écartés, les autres vont servir à trouver le logo template.
 
-*** Recherche du logo template parmis les frames filtrés
+*** Recherche du logo template parmi les frames filtrés
 Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.
-Pour déterminer le logo template parmis les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
-Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélection le frame m minimisant la distance avec tous les autres frames du cluster.
+Pour déterminer le logo template parmi les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
+Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélectionner le frame m minimisant la distance avec tous les autres frames du cluster.
 
 #+CAPTION: Formule de la distance entre deux frames dans le cluster label:calc-dist
 #+ATTR_LATEX: :width 10cm
@@ -267,7 +276,7 @@ Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier 
 ** Learning Spatiotemporal Features with 3D Convolutional Networks
 Dans cet article cite:Tran_2015, les auteurs proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neurones à convolution.
 
-Ils font l'hypothése qu'un réseau avec une couche de convolution 3D qui prend en entrée une séquence d'images est capable d'apprendre efficacement les mouvements des objets dans les vidéos.
+Ils font l'hypothèse qu'un réseau avec une couche de convolution 3D qui prend en entrée une séquence d'images est capable d'apprendre efficacement les mouvements des objets dans les vidéos.
 
 L'objectif est d'apprendre des caractéristiques qui soient :
 - génériques : c'est à dire la capacité à représenter différents types de vidéos
@@ -394,7 +403,7 @@ Ensuite, une matrice M de dimension N * L, représentant une fenêtre de N frame
 
 L'algorithme SVD (singular value decomposition) va être appliqué sur M.  $M = UWV$, où W est la matrice de valeurs singulières.
 
-Les diagonales de la matrice W comportent des poids S ordonnés de manière non croissante.
+Les diagonales de la matrice W comportent des poids S ordonnés de manière décroissante.
 Le premier poid S_1 est le poid maximal. Ces poids représentent l'information contenue dans le vecteur V.
 
 Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre d'éléments s dans S tel que s/S1 > threshold. Le rang va être calculé pour chaque fenêtre de frames dans la vidéo.
@@ -402,7 +411,7 @@ Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre 
 Si le rang d'une fenêtre est plus que grand que le rang de la fenêtre avant elle, alors le contenu visuel de la fenêtre est différent de la fenêtre précédente.
 À l'inverse, si le rang est inférieure à la fenêtre précédente, alors le contenu visuel se stabilise. S'il est de 1, alors c'est stable.
 
-Le début d'un frame est celui qui maximise le rang parmis les fenêtres environnantes.
+Le début d'un frame est celui qui maximise le rang parmi les fenêtres environnantes.
 
 Cette méthode pour trouver les plans dans une vidéo est très efficace, et nous servira tout au long de la suite de notre recherche.
 
@@ -416,30 +425,31 @@ De plus, la segmentation en plan réduit le champs de recherche des frames logo,
 ** Analyse d'image - Première approche : ORB
 Dans cette approche, nous cherchons à reconnaître les logos dans les vidéo.
 Pour ce faire, nous optons pour une approche de clustering. 
-L'idée est de clusteriser la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
+L'idée est de séparer la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
 
-*** Extraction des caractéristiques
 Il existe plusieurs manières de représenter une image, par exemple :
 - une matrice w * l * c où c est le nombre de canal (3 pour une image couleur, 1 pour une image en noir et blanc), w et l la largeur et la longueur (resp.) de l'image en pixel
 - un histogramme des couleurs RGB
 - un histogramme HSV
 Néanmoins, aucune de ces méthodes ne permet de vectoriser l'image de tel sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.
 
-Dans cette partie, nous utilisons l'algorithme ORB (cite:Rublee_2011) pour extraire des caractéristiques à partir des frames d'une vidéo.
+De plus dans notre cas, nous souhaitons regrouper non pas des frames (images) mais des plans (séquence d'images).
 
-*** KMeans
-OpenCV implémente aussi l'algorithme KMeans. Celui-ci permet de regrouper les objets similaires en fonction de leur feature. 
+OpenCV implémente l'algorithme KMeans. Celui-ci permet de regrouper les objets similaires en fonction de leurs caractéristiques. 
 Dans notre cas, il va nous permettre de créer deux groupes d'images : logo / non logo.
 L'avantage de KMeans est qu'il est est très rapide et assez efficace dans la plupart des cas.
 C'est l'un des algorithmes de clusterisation les plus utilisés.
 
+Pour fonctionner, KMeans a besoin que les objets que l'on souhaite séparer en groupe soit sous forme de vecteurs et que ces vecteurs soient discriminants. C'est à dire qu'un frame logo ne doit pas être proche dans l'espace d'un frame non-logo.
+
+Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques à partir pour chaque plan dans la vidéo.
 
 *** Première expérimentation : 1 frame par shot
-#+CAPTION: Caractèristiques extraites par ORB (en vert), pour une seule image par plan
+#+CAPTION: Caractéristiques extraites par ORB (en vert), pour une seule image par plan
 #+ATTR_LATEX: :width 8cm
 [[file:orb_simple_res.JPG]]
 
-Ici, nous ne récupérons les caractèristiques que d'une seule image par plan.
+Ici, nous ne récupérons les caractéristiques que d'une seule image par plan.
 
 L'algorithme est le suivant :
 #+BEGIN_SRC
@@ -451,17 +461,17 @@ L'algorithme est le suivant :
   - le groupe le plus petit est le groupe des logo
 #+END_SRC
 
-*** Première expérimentation : 1 fenêtre de frame par shot:
-#+CAPTION: Caractèristiques extraites par ORB (en vert) pour un plan (aggrégat des caractèristiques de chaque image dans le plan) label:orb-window
+*** Deuxième expérimentation : 1 fenêtre de frame par shot:
+#+CAPTION: Caractéristiques extraites par ORB (en vert) pour un plan (aggrégat des caractéristiques de chaque image dans le plan) label:orb-window
 #+ATTR_LATEX: :width 8cm
 file:akaze_window_res.jpg
 L'approche précédente ne récupère qu'une seule image par plan. 
 Or, les logos sont présents sur plusieurs frames consécutifs. 
-Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractèristiques pour chaque frame (voir figure ref:orb-window).
+Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractéristiques pour chaque frame (voir figure ref:orb-window).
 
 L'algorithme est le suivant :
 #+BEGIN_SRC
-- Récupérer W frames pour chaque shot, les régrouper en une fenêtre
+- Récupérer W frames pour chaque shot, les regrouper en une fenêtre
   - nous obtenons |S| fenêtres de dimension W, où W est le nombre de frame
 - Pour chaque fenêtre, calculer les features de chacun de ses frames (ORB)
   - Nous obtenons un vecteur de dimension |S*W|
@@ -475,7 +485,7 @@ En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'i
 
 Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Almageed_2008) pour réduire la zone de recherche des logos de début et de fin des replays.
 
-L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leur frame.
+L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
 
 
 *** Mosaique de plan
@@ -575,8 +585,8 @@ Soit S l'ensemble des plans.
 
 Les résultats (ref:orb-res) sont mauvais sur toutes les vidéos.
 Le gros inconvénient de ces méthodes est le caractère arbitraire de la sélection du groupe de logo après le clustering.
-En effet, nous faisons l'hypothése qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.
-De plus, l'algorithme d'extraction de caractèristiques ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.
+En effet, nous faisons l'hypothèse qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.
+De plus, l'algorithme d'extraction de caractéristiques ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.
 
 Néanmoins, il est intéressant de remarquer que les résultats avec la fenêtre de frame sont toujours meilleurs que les résultats avec un seul frame.
 ** Résultats pour la détection par luminance
@@ -595,7 +605,7 @@ Les logos de Premier League quant à eux ne sont pas tous détectés avec un seu
 
 Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en place un système de détection de replays robuste et efficace.
 
-*** Résultats pour l'approche par matching de contours
+** Résultats pour l'approche par matching de contours
 #+CAPTION: Résultats obtenus label:res-match-contour
 #+ATTR_LATEX: :width 17cm
 [[file:res_match_contour.png]]
