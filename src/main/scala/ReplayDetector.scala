@@ -26,7 +26,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
 
   //private val saveWindowSize = math.min((fps / 6).toInt, 4)
   private val contourDiffDilate: Option[Int] = Some(2)
-  private val minLogoSegmentLength = mosaicHeight / 4
+  private val minLogoSegmentLength = mosaicHeight / 2
   private val logoThreshold = mosaicSize * 2000 // !!! the logo threshold is dependant of the size of the image (the countours are bigger in a 200*200 img than in a 100*100 img)
   private val knownLogoThreshold = 2 // the number of known logo that must match
 
@@ -327,7 +327,7 @@ class ReplayDetector(capture: VideoCapture) extends Configuration {
     // We want to save frames surrounding the shot transition (half of them in shot S_t and half of them in shot S_t+1 ideally)
     // The frames before the shot transition are those before the current index and the frames after the shot transition
     // are those after the current shot index (shotIdx should ideally be the exact moment between two shots).
-    val framePosition = shotIdx - (mosaicSize / 2) // TODO : check if framePosition = shotIdx - mosaicSize / 2 isn't better
+    val framePosition = shotIdx - (mosaicSize / 2)
     capture.set(CAP_PROP_POS_FRAMES, framePosition)
     // all the border detected in the frames
     val contours: Seq[Mat] = (0 until mosaicSize).map { _ =>

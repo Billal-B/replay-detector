@@ -9,6 +9,9 @@ libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.534"
 // https://mvnrepository.com/artifact/commons-io/commons-io
 libraryDependencies += "commons-io" % "commons-io" % "2.4"
 
+// https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
+libraryDependencies += "com.google.cloud" % "google-cloud-storage" % "1.85.0"
+
 assemblyMergeStrategy in assembly := {
   case PathList("reference.conf") => MergeStrategy.concat
   case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard

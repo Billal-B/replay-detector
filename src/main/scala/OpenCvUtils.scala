@@ -7,7 +7,7 @@ import org.opencv.imgcodecs.Imgcodecs._
 import org.opencv.imgproc.Imgproc._
 import org.opencv.core.Core._
 import org.opencv.core.CvType._
-import org.opencv.core.{Core, Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
+import org.opencv.core.{Core, CvType, Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
 import org.opencv.videoio.VideoCapture
 import org.opencv.video.Video.calcOpticalFlowFarneback
 
@@ -57,7 +57,7 @@ object OpenCvUtils {
         frame
       }.toVector
 
-      //if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/" + "flow.png")
+      if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/")
 
       framesToSave.zipWithIndex.foreach{case (frame, i) =>
         imwrite(indexDir.getCanonicalPath + "/" + i +".png", frame)
@@ -67,44 +67,86 @@ object OpenCvUtils {
     }
   }
 
-  private def calcOpticalFlow(frames: Vector[Mat], filename: String): Unit = {
-    val accumulatedOpticalFlow = for {
-      idx <- 0 until (frames.length - 1)
-    } yield {
-      val prevFrame = frames(idx)
-      val currentFrame = frames(idx + 1)
-      val flow = new Mat()
-      val grayedPrev = new Mat()
-      cvtColor(prevFrame, grayedPrev, COLOR_RGB2GRAY)
-      val grayedCurrent = new Mat()
-      cvtColor(currentFrame, grayedCurrent, COLOR_RGB2GRAY)
+  private def calcOpticalFlow(frames: Vector[Mat], directory: String): Unit = {
+    val matInit = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2, new Scalar(0,0,0))
+    val accumulatedFlow = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2)
+    val (trajectoryFlow, accDist) =
+      0.until(frames.length - 1).foldLeft(matInit, 0d) { case ((prevFlow, prevAccDist), idx) =>
+        val prevFrame = frames(idx)
+        val currentFrame = frames(idx + 1)
+        val flow = new Mat()
 
-      calcOpticalFlowFarneback(grayedPrev, grayedCurrent, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
+        val grayedPrev = new Mat()
+        cvtColor(prevFrame, grayedPrev, COLOR_RGB2GRAY)
+        val grayedCurrent = new Mat()
+        cvtColor(currentFrame, grayedCurrent, COLOR_RGB2GRAY)
 
-      grayedPrev.release()
-      grayedCurrent.release()
-      flow
-    }
+        calcOpticalFlowFarneback(grayedPrev, grayedCurrent, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
 
-    val framesOpticalFlow = accumulatedOpticalFlow.reduce{(prevFlow, currentFlow) =>
-      val cumulator = new Mat()
-      Core.add(prevFlow, currentFlow, cumulator)
-      cumulator
-    }
+        val accflow = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2, new Scalar(0,0,0))
+        Core.add(prevFlow, flow, accflow)
 
-    val color = new Scalar(0d, 255d, 0d)
-    val step = 16
+        // calculing the norm of the optical flux vector
+        // see : https://hal.inria.fr/inria-00583818/document, equation 2
+        val norm = Core.norm(flow)
+
+        // storing the current flow to be referenced by its index and later generates a 2L image channel
+        // with the flow infos
+        // See : https://papers.nips.cc/paper/5353-two-stream-convolutional-networks-for-action-recognition-in-videos.pdf
+        val cflow = new Mat(frames.head.rows, frames.head.cols(), frames.head.`type`(), new Scalar(0,0,0))
+        val cflowHorizontal = new Mat(frames.head.rows, frames.head.cols(), frames.head.`type`(), new Scalar(0,0,0))
+        val cflowVertical = new Mat(frames.head.rows, frames.head.cols(), frames.head.`type`(), new Scalar(0,0,0))
+
+        val step = 5
+        for {
+          y <- 0 until cflowHorizontal.rows() by step
+          x <- 0 until cflowHorizontal.cols() by step
+        } {
+          // storing the current flow to be referenced by its index and later generates a 2L image channel
+          // with the flow infos
+          // See : https://papers.nips.cc/paper/5353-two-stream-convolutional-networks-for-action-recognition-in-videos.pdf
+          val point = flow.get(y, x)
+          line(cflowHorizontal, new Point(x, y), new Point(Math.round(x.toDouble), Math.round(y.toDouble+point(1))),
+            new Scalar(255d, 255d, 255d))
+          line(cflowVertical, new Point(x, y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble)),
+            new Scalar(255d, 255d, 255d))
+          line(cflow, new Point(x, y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
+            new Scalar(255d, 255d, 255d))
+        }
+        imwrite(directory + "flow2D_" + (idx * 2) + ".png", cflowHorizontal)
+        imwrite(directory + "flow2D_" + (idx * 2 + 1) + ".png", cflowVertical)
+        imwrite(directory + "flow3D_" + idx + ".png", cflow)
+
+        cflowHorizontal.release()
+        cflowVertical.release()
+        cflow.release()
+        grayedPrev.release()
+        grayedCurrent.release()
+        flow.release()
+        prevFlow.release()
+        (accflow, norm + prevAccDist)
+      }
+
+    val cflow = new Mat(frames.head.rows, frames.head.cols(), frames.head.`type`(), new Scalar(0,0,0))
+
+    val normalizedFlow = new Mat(trajectoryFlow.rows,trajectoryFlow.cols(), trajectoryFlow.`type`(), new Scalar(0))
+    Core.divide(trajectoryFlow, new Scalar(accDist, accDist), normalizedFlow)
+
+    val step = 5
     for {
-      y <- 0 until framesOpticalFlow.rows() by step
-      x <- 0 until framesOpticalFlow.cols() by step
+      y <- 0 until cflow.rows() by step
+      x <- 0 until cflow.cols() by step
     } {
-      val point = framesOpticalFlow.get(y, x)
-      line(framesOpticalFlow, new Point(point), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
-        color)
+      // storing the current flow to be referenced by its index and later generates a 2L image channel
+      // with the flow infos
+      // See : https://papers.nips.cc/paper/5353-two-stream-convolutional-networks-for-action-recognition-in-videos.pdf
+      val point = trajectoryFlow.get(y, x)
+      line(cflow, new Point(x, y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
+        new Scalar(255d, 255d, 255d))
     }
+    imwrite(directory + "flow.png", cflow)
 
-    imwrite(filename, framesOpticalFlow)
-
+    cflow.release()
   }
 
   /*
