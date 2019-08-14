@@ -19,8 +19,8 @@ case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 trait Configuration {
   def videoName = "video.mp4" // the video to parse
   def logoTag = None // the known logo tag to use if searching in the known logo database, if none, don't search in the logo DB but only between consecutive shots
-  def frameToAnalyse: Int = 2000 // the number of frame to analyze in the video
-  def startFrame: Int = 11000 // the frame in the video where the parsing begin
+  def frameToAnalyse: Int = Int.MaxValue // the number of frame to analyze in the video
+  def startFrame: Int = 10000 // the frame in the video where the parsing begin (we skip some at the beginning because they are usually noisy)
   def videoWidth: Int = 100 // the width to resize the video to before doing the parsing
   def videoHeight: Int = 100 // the height to resize the video to before doing the parsing
   val frameFolderName         = "frame/"
@@ -127,10 +127,9 @@ object Main extends App with Configuration {
 
     println("Saving " + logos.map(_.index).distinct.size + " logo frames")
 
-
     logos
       .groupBy(_.tag)
-      .foreach{case (optTag, logosForTag) =>
+      .foreach{ case (optTag, logosForTag) =>
         OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, frameFolderName + optTag.getOrElse("unk") + "/", Some(runId + "/"), mosaicSize)
       }
 
