@@ -13,9 +13,13 @@ import org.opencv.videoio.VideoCapture
 
 
 
-class ReplayDetector(capture: VideoCapture) extends Configuration {
+class ReplayDetector(capture: VideoCapture,
+                     videoInfo: VideoInfo
+                    ) extends Configuration {
 
   import OpenCvUtils._
+
+  import videoInfo._
 
   private val fps: Int = math.round(capture.get(CAP_PROP_FPS)).toInt
 

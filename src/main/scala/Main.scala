@@ -1,10 +1,32 @@
 import java.io.File
 import java.sql.Timestamp
 
+import YoutubeLogoExtractor.setup
+import akka.Done
 import org.opencv.core.{Core, Mat}
 import org.opencv.videoio.VideoCapture
 import org.opencv.videoio.Videoio._
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import akka.stream.ActorMaterializer
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
+import akka.Done
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.StatusCodes
+// for JSON serialization/deserialization following dependency is required:
+// "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import spray.json.DefaultJsonProtocol._
+import scala.concurrent.duration._
 
+import scala.concurrent.Future
+import scala.io.StdIn
 import scala.util.Try
 
 /**
@@ -16,13 +38,9 @@ import scala.util.Try
   */
 case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 
+case class VideoInfo(startFrame: Int, frameToAnalyse: Int, videoWidth: Int, videoHeight: Int)
+
 trait Configuration {
-  def videoName = "video.mp4" // the video to parse
-  def logoTag = None // the known logo tag to use if searching in the known logo database, if none, don't search in the logo DB but only between consecutive shots
-  def frameToAnalyse: Int = 2000 // the number of frame to analyze in the video
-  def startFrame: Int = 10000 // the frame in the video where the parsing begin (we skip some at the beginning because they are usually noisy)
-  def videoWidth: Int = 100 // the width to resize the video to before doing the parsing
-  def videoHeight: Int = 100 // the height to resize the video to before doing the parsing
   val frameFolderName         = "frame/"
   val knownLogoFolderName     = "known_logo/"
   val mosaicParentFolderName  = "shot/"
@@ -45,7 +63,7 @@ trait Configuration {
     * The second one will be a matrix of dim mosaicSize * mosaicSize where each row is the frame of the shots with an
     * offset of i where i is the row number.
     * Comparing the contours between the two matrics will give us the contours of the two shots in one go.
-   */
+    */
   def mosaicSize = 20 // the size of the mosaic
 
   // the date when we parsed the video
@@ -60,19 +78,81 @@ trait Configuration {
   // def findShot: Vector[Int]
 }
 
-object Main extends App with Configuration {
+object WebServer extends App {
 
-  //System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
+  System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
   setup()
-  val filename = args.headOption.map(downloadFromYoutube) getOrElse videoName
-  val knownLogoTag = Try(args(1)).toOption.orElse(logoTag)
 
-  //replayDetection(filename, knownLogoTag)
+  implicit val system = ActorSystem("my-system")
+  implicit val materializer = ActorMaterializer()
+  // needed for the future flatMap/onComplete in the end
+  implicit val executionContext = system.dispatcher
 
-  def downloadFromYoutube(youtubeUrl: String) = {
-    val process = Runtime.getRuntime().exec("youtube-dl -f 160 " + youtubeUrl + " -o video.mp4")
+  case class YoutubeRequest(youtubeUrl: String,
+                            knownLogoTag: Option[String] = None,  // the, known logo tag to use if searching in the known logo database, if none, don't search in the logo DB but only between consecutive shots
+                            frameToAnalyse: Option[Int], // the number of frame to analyze in the video
+                            startFrame: Option[Int], // the frame in the video where the parsing begin (we skip some at the beginning because they are usually noisy)
+                            videoWidth: Option[Int], // the width to resize the video to before doing the parsing
+                            videoHeight: Option[Int]// the height to resize the video to before doing the parsing
+                           )
+
+  implicit val itemFormat = jsonFormat6(YoutubeRequest)
+
+  val route: Route =
+    concat(
+      post {
+        path("replay-detector") {
+          withRequestTimeout(30.minutes) {
+            entity(as[YoutubeRequest]) { youtubeRequest =>
+              val saved: Future[Done] =
+                Future.successful(
+                  YoutubeLogoExtractor(
+                    youtubeRequest.youtubeUrl,
+                    youtubeRequest.knownLogoTag,
+                    videoInfo = VideoInfo(
+                      startFrame = youtubeRequest.startFrame.getOrElse(0),
+                      frameToAnalyse = youtubeRequest.frameToAnalyse.getOrElse(Int.MaxValue),
+                      videoWidth = youtubeRequest.videoWidth.getOrElse(100),
+                      videoHeight = youtubeRequest.videoHeight.getOrElse(100),
+                    )
+                  )
+                ).map { _ => Done }
+              onComplete(saved) { done =>
+                complete("done parsing the video")
+              }
+            }
+          }
+        }
+      }
+    )
+
+
+  val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+  println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+  StdIn.readLine() // let it run until user presses return
+  bindingFuture
+    .flatMap(_.unbind()) // trigger unbinding from the port
+    .onComplete(_ => system.terminate()) // and shutdown when done
+
+}
+
+object YoutubeLogoExtractor extends Configuration {
+
+  def apply(youtubeUrl: String, knownLogoTag: Option[String], videoInfo: VideoInfo): Unit = {
+    downloadFromYoutube(youtubeUrl)
+    replayDetection("video.mp4", knownLogoTag, videoInfo)
+    uploadToGCP("frame/unk")
+  }
+
+  def downloadFromYoutube(youtubeUrl: String): String = {
+    val process = Runtime.getRuntime.exec("youtube-dl -f 160 " + youtubeUrl + " -o video.mp4")
     process.waitFor()
     youtubeUrl
+  }
+
+  def uploadToGCP(folderPath: String): Unit = {
+    val process = Runtime.getRuntime.exec("gsutil cp -r " + folderPath + " gs://logo_detection_shots")
+    process.waitFor()
   }
 
   // ensure every folder exists, also clean the shot folder
@@ -100,13 +180,16 @@ object Main extends App with Configuration {
     * @param filename The filename of the video to parse
     * @param knownLogoTag The logo to match in the logo DB (optional, if not specified, we don't use the logo DB)
     */
-  def replayDetection(filename: String, knownLogoTag: Option[String] = None) = {
+  def replayDetection(filename: String,
+                      knownLogoTag: Option[String] = None,
+                      videoInfo: VideoInfo
+                     ) = {
     knownLogoTag.foreach(t => println("Known logo : " + t))
     val capture: VideoCapture = new VideoCapture(filename)
     val fps: Double = capture.get(CAP_PROP_FPS)
     val t = System.currentTimeMillis()
 
-    val shotDetector = new ShotDetector(capture) with Configuration
+    val shotDetector = new ShotDetector(capture, videoInfo) with Configuration
     // shot detection
     val shotFrames = shotDetector.findShot
     val foundShots = shotFrames.groupBy(s => (s.toDouble / (fps /2)).round).flatMap(_._2.headOption).toVector
@@ -114,7 +197,7 @@ object Main extends App with Configuration {
     println("Time to find shots: " + computeSlidingWindowsTime)
 
     // replay detection
-    val replayDetector = new ReplayDetector(capture) with Configuration
+    val replayDetector = new ReplayDetector(capture, videoInfo) with Configuration
     replayDetector.saveShots(foundShots.sorted) // !!!! needs to be SORTED (ascending) !!!!
     val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
     println("Time to save shot: " + saveShotTime)

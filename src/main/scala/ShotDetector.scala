@@ -10,9 +10,11 @@ import scala.collection.JavaConverters._
 /*
 * Handles the segmentation of videos into shots
 * */
-class ShotDetector(capture: VideoCapture) extends Configuration {
+class ShotDetector(capture: VideoCapture, videoInfo: VideoInfo) extends Configuration {
   import OpenCvUtils._
   import ShotDetector._
+
+  import videoInfo._
 
   private val fps: Int = math.round(capture.get(CAP_PROP_FPS)).toInt
   capture.set(CAP_PROP_POS_FRAMES, startFrame)
