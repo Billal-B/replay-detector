@@ -19,7 +19,7 @@ case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 trait Configuration {
   def videoName = "video.mp4" // the video to parse
   def logoTag = None // the known logo tag to use if searching in the known logo database, if none, don't search in the logo DB but only between consecutive shots
-  def frameToAnalyse: Int = Int.MaxValue // the number of frame to analyze in the video
+  def frameToAnalyse: Int = 2000 // the number of frame to analyze in the video
   def startFrame: Int = 10000 // the frame in the video where the parsing begin (we skip some at the beginning because they are usually noisy)
   def videoWidth: Int = 100 // the width to resize the video to before doing the parsing
   def videoHeight: Int = 100 // the height to resize the video to before doing the parsing
@@ -62,11 +62,18 @@ trait Configuration {
 
 object Main extends App with Configuration {
 
-  System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
+  //System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
   setup()
-  val filename = args.headOption getOrElse videoName
+  val filename = args.headOption.map(downloadFromYoutube) getOrElse videoName
   val knownLogoTag = Try(args(1)).toOption.orElse(logoTag)
-  replayDetection(filename, knownLogoTag)
+
+  //replayDetection(filename, knownLogoTag)
+
+  def downloadFromYoutube(youtubeUrl: String) = {
+    val process = Runtime.getRuntime().exec("youtube-dl -f 160 " + youtubeUrl + " -o video.mp4")
+    process.waitFor()
+    youtubeUrl
+  }
 
   // ensure every folder exists, also clean the shot folder
   def setup(): Unit = {
