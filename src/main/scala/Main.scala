@@ -1,7 +1,7 @@
 import java.io.File
 import java.sql.Timestamp
 
-import YoutubeLogoExtractor.setup
+import YoutubeLogoExtractor.setupRun
 import akka.Done
 import org.opencv.core.{Core, Mat}
 import org.opencv.videoio.VideoCapture
@@ -19,6 +19,7 @@ import akka.Done
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
+import com.google.cloud.storage.StorageOptions
 
 import scala.concurrent.ExecutionContext
 // for JSON serialization/deserialization following dependency is required:
@@ -47,8 +48,7 @@ case class VideoInfo(startFrame: Int,
                      runId: String)
 
 trait Configuration {
-  val logoFolderName         = "frame/"
-  val nonLogoFolderName         = "non_logo/"
+  val logoFolderName          = "frame/"
   val knownLogoFolderName     = "known_logo/"
   val mosaicParentFolderName  = "shot/"
   val shiftedMosaicFolderName = mosaicParentFolderName + "A/"
@@ -79,7 +79,6 @@ trait Configuration {
 object WebServer extends App {
 
   System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
-  setup()
 
   implicit val system = ActorSystem("my-system")
   implicit val materializer = ActorMaterializer()
@@ -142,19 +141,26 @@ object YoutubeLogoExtractor extends Configuration {
            (implicit ec:ExecutionContext)
   : Future[Unit] = {
     Future {
+      setupRun(videoInfo.runId)
       println(s"Starting to parse the video $youtubeUrl.\n$videoInfo")
       downloadFromYoutube(youtubeUrl, videoInfo.runId)
       replayDetection(videoInfo.runId + ".mp4", knownLogoTag, videoInfo)
-    }.map(_ => uploadToGCP(logoFolderName, "gs://logo_detection_shots"))
+    }.map(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
   }
 
   def downloadFromYoutube(youtubeUrl: String, runId: String): String = {
     println(s"Downloading ${youtubeUrl} from youtube")
+    /*
     val process = Runtime.getRuntime.exec(s"youtube-dl -f 160 $youtubeUrl -o $runId.mp4")
     process.waitFor()
     val error = scala.io.Source.fromInputStream(process.getErrorStream).mkString
     if (error != "") println("ERROR : " + error)
     else println("No error while downloading from youtube")
+     */
+    import sys.process._
+    val cmd = Process(s"youtube-dl -f 160 $youtubeUrl -o $runId.mp4")
+    val res = cmd.!
+    println(res)
     youtubeUrl
   }
 
@@ -162,23 +168,34 @@ object YoutubeLogoExtractor extends Configuration {
                   bucket: String)
                  (implicit ec: ExecutionContext)
   : Future[Unit] = Future {
+    val storage = StorageOptions.getDefaultInstance.getService
     println(s"Uploading $folderPath to GCP")
+    import sys.process._
+    val cmd = Process("gsutil -m cp -r " + folderPath + " " + bucket)
+    val res = cmd.!
+    println(res)
+    /*
     val process = Runtime.getRuntime.exec("gsutil -m cp -r " + folderPath + " " + bucket)
     process.waitFor()
     val error = scala.io.Source.fromInputStream(process.getErrorStream).mkString
     if (error != "") println("ERROR : " + error)
     else println("No error while uploading to GCP")
+     */
   }
 
   // ensure every folder exists, also clean the shot folder
-  def setup(): Unit = {
-    val frameFolder = new File(logoFolderName)
-    val knownLogoFolder = new File(knownLogoFolderName)
-    val shotFolder = new File(mosaicParentFolderName)
-    val shiftMosaicFolder = new File(shiftedMosaicFolderName)
-    val nonShiftedMosaicFolder = new File(normalMosaicFolderName)
+  def setupRun(runId: String): Unit = {
+    val runFolder = new File(runId)
+    runFolder.mkdirs()
+    val frameFolder = new File(runId + "/" + logoFolderName)
+    val knownLogoFolder = new File(runId + "/" + knownLogoFolderName)
+    val shotFolder = new File(runId + "/" + mosaicParentFolderName)
+    val shiftMosaicFolder = new File(runId + "/" + shiftedMosaicFolderName)
+    val nonShiftedMosaicFolder = new File(runId + "/" + normalMosaicFolderName)
     if (! frameFolder.exists() || ! frameFolder.isDirectory) frameFolder.mkdirs()
+    else org.apache.commons.io.FileUtils.cleanDirectory(frameFolder)
     if (! knownLogoFolder.exists() || ! knownLogoFolder.isDirectory) knownLogoFolder.mkdirs()
+    else org.apache.commons.io.FileUtils.cleanDirectory(knownLogoFolder)
     if (! shotFolder.exists() || ! shotFolder.isDirectory) {
       shotFolder.mkdirs()
       shiftMosaicFolder.mkdirs()
@@ -213,14 +230,18 @@ object YoutubeLogoExtractor extends Configuration {
 
     // replay detection
     val replayDetector = new ReplayDetector(capture, videoInfo) with Configuration
-    replayDetector.saveShots(foundShots.sorted) // !!!! needs to be SORTED (ascending) !!!!
+    replayDetector.saveShots(
+      videoInfo.runId,
+      foundShots.sorted,
+      videoInfo.runId + "/" + mosaicParentFolderName, // !!!! needs to be SORTED (ascending) !!!!
+      videoInfo.runId + "/" + logoFolderName) // !!!! needs to be SORTED (ascending) !!!!
     val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
     println("Time to save shot: " + saveShotTime)
 
 
     val logos = knownLogoTag match {
-      case Some(tag)=> replayDetector.matchKnownLogo(foundShots, tag)
-      case None => replayDetector.findMachingShots(foundShots)
+      case Some(tag)=> replayDetector.matchKnownLogo(videoInfo.runId, foundShots, tag)
+      case None => replayDetector.findMachingShots(videoInfo.runId, foundShots)
     }
 
     val computeLogoTime = System.currentTimeMillis() - saveShotTime - t
@@ -235,14 +256,15 @@ object YoutubeLogoExtractor extends Configuration {
     logos
       .groupBy(_.tag)
       .foreach{ case (optTag, logosForTag) =>
-        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, logoFolderName + optTag.getOrElse("unk") + "/", Some(videoInfo.runId + "/"), mosaicSize)
+        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, videoInfo.runId + "/" + logoFolderName + optTag.getOrElse("unk") + "/", Some(videoInfo.runId + "/"), mosaicSize)
       }
 
     // save non logo shots
-    val nonLogos = scala.util.Random.shuffle(
-      shotFrames.toSet -- (logos.map(_.index) ++ logos.map(_.matches)).toSet
-    ).take(logos.length)
-    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, logoFolderName + "not_logo", Some(videoInfo.runId + "/"), mosaicSize)
+    val distinctLogos = (logos.map(_.index) ++ logos.map(_.matches)).toSet
+    val nonLogos = scala.util.Random
+      .shuffle(shotFrames.toSet -- distinctLogos)
+      .take(distinctLogos.size)
+    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, videoInfo.runId + "/" + logoFolderName + "not_logo", Some(videoInfo.runId + "/"), mosaicSize)
 
     println("Time total : " + (System.currentTimeMillis() - t))
 

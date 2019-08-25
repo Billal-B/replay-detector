@@ -161,10 +161,10 @@ class ReplayDetector(capture: VideoCapture,
 
   // finds the logo against our database of known logo (inside the known_logo folder)
   // todo : do not make the known_logo folder hard coded
-  def matchKnownLogo(shotIdxs: Seq[Int], tag: String) = {
-    val logoFolder = new java.io.File(knownLogoFolderName)
+  def matchKnownLogo(runId: String, shotIdxs: Seq[Int], tag: String) = {
+    val logoFolder = new java.io.File(runId + "/" + knownLogoFolderName)
     val possibleLogoFrames = collection.mutable.Set.empty[Logo]
-    val shotsPath = shiftedMosaicFolderName
+    val shotsPath = runId + "/" + shiftedMosaicFolderName
     for (shotIdx <- shotIdxs) {
       val shot = imread(shotsPath + shotIdx + ".png", IMREAD_UNCHANGED)
       var found = 0
@@ -196,18 +196,19 @@ class ReplayDetector(capture: VideoCapture,
     * Compares the mosaics of shots to find matching contours.
     * A score relative to the contours is given (), and if this score is above a threshold, then considers the two frames
     * like logos that match with each other.
+    * @param runId the run Id
     * @param shotIdxs The indexes (frame position in the video) of the shots
     * @return The detected logos
     */
-  def findMachingShots(shotIdxs: Seq[Int]): Vector[Logo] = {
+  def findMachingShots(runId: String, shotIdxs: Seq[Int]): Vector[Logo] = {
     val possibleLogoFrames = collection.mutable.Set.empty[Logo]
     val sortedShots = shotIdxs.sorted
     for (shotAIdx <- sortedShots) {
       val shiftMosaicFilename = shotAIdx + ".png"
-      val shiftMosaic = imread(shiftedMosaicFolderName + shiftMosaicFilename, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
+      val shiftMosaic = imread(runId + "/" + shiftedMosaicFolderName + shiftMosaicFilename, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
       for (shotBIdx <- sortedShots if shotBIdx - shotAIdx >= fps * 2 & shotBIdx - shotAIdx < fps * 90) {
         val normalMosaicFilename = shotBIdx + ".png"
-        val normalMosaic = imread(normalMosaicFolderName + normalMosaicFilename, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
+        val normalMosaic = imread(runId + "/" + normalMosaicFolderName + normalMosaicFilename, IMREAD_UNCHANGED) // todo : dont hard code shot/A/
         val res = contourDiff(shiftMosaic, normalMosaic, shotAIdx + "_" + shotBIdx) // we get the score of the matching contours between the two frames
         if (res > logoThreshold) {
           println(shotAIdx + " matches with " + shotBIdx + " by " + res)
@@ -231,8 +232,8 @@ class ReplayDetector(capture: VideoCapture,
         val otherLogoIndexes = (filteredLogosIdx - idx).toVector
         // we ensure that at least another N match
         val atLeastNOtherMatch = existsN(otherLogoIndexes, {otherIdx: Int =>
-          val shiftMosaic = imread(shiftedMosaicFolderName + idx + ".png", IMREAD_UNCHANGED)
-          val normalMosaic = imread(normalMosaicFolderName + otherIdx + ".png", IMREAD_UNCHANGED)
+          val shiftMosaic = imread(runId + "/" + shiftedMosaicFolderName + idx + ".png", IMREAD_UNCHANGED)
+          val normalMosaic = imread(runId + "/" + normalMosaicFolderName + otherIdx + ".png", IMREAD_UNCHANGED)
           val score = contourDiff(shiftMosaic, normalMosaic, idx + "_" + otherIdx)
           shiftMosaic.release()
           normalMosaic.release()
@@ -286,11 +287,12 @@ class ReplayDetector(capture: VideoCapture,
   * Writes the shots (indexed by their frame position) on disk, to be analyzed by the replay detection later.
   * The shots are saved as mosaic images. See the comment in the trait Configuration.
   * */
-  def saveShots(
-    shotIdxs: Vector[Int],
-    shotFolder: String = mosaicParentFolderName,
-    frameFolder: String=logoFolderName
-  ): Unit = {
+  def saveShots(runId: String,
+                shotIdxs: Vector[Int],
+                shotFolder: String,
+                frameFolder: String
+               )
+  : Unit = {
     var previousShotIdx = 0
     val backgroundSize = 1
 
@@ -315,7 +317,7 @@ class ReplayDetector(capture: VideoCapture,
       val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
       //val s = if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat] else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
 
-      writeShotMosaic(shotIdx, nextBackgroundFrames ++ previousBackgroundFrames, shotFolder)
+      writeShotMosaic(runId, shotIdx, nextBackgroundFrames ++ previousBackgroundFrames, shotFolder)
       previousShotIdx = shotIdx
 
       //nextBackgroundFrames.foreach(_.release())
@@ -327,7 +329,7 @@ class ReplayDetector(capture: VideoCapture,
   // The background frames will be substracted in every frame in the mosaic
   // backgroundFrame must be of dimension mosaicWidth * mosaicHeight
   // todo : check the release here
-  private def writeShotMosaic(shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat], shotFolder: String) = {
+  private def writeShotMosaic(runId: String, shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat], shotFolder: String) = {
     // We want to save frames surrounding the shot transition (half of them in shot S_t and half of them in shot S_t+1 ideally)
     // The frames before the shot transition are those before the current index and the frames after the shot transition
     // are those after the current shot index (shotIdx should ideally be the exact moment between two shots).
@@ -390,8 +392,8 @@ class ReplayDetector(capture: VideoCapture,
       IMWRITE_PNG_BILEVEL, 1
     )
     */
-    imwrite(shiftedMosaicFolderName + shotIdx + ".png", shiftedContoursMosaic/*, parameters*/) // the shifted mosaic are stored in the shot/A
-    imwrite(normalMosaicFolderName + shotIdx + ".png", contoursMosaic/*, parameters*/) // the non shifted mosaic are stored in the shot/B
+    imwrite(runId + "/" + shiftedMosaicFolderName + shotIdx + ".png", shiftedContoursMosaic/*, parameters*/) // the shifted mosaic are stored in the shot/A
+    imwrite(runId + "/" + normalMosaicFolderName + shotIdx + ".png", contoursMosaic/*, parameters*/) // the non shifted mosaic are stored in the shot/B
     shiftedContoursMosaic.release()
     contoursMosaic.release()
     //parameters.release()

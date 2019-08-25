@@ -1,4 +1,4 @@
-POST http://0.0.0.0:8022/replay-detector
+POST http://localhost:8080/replay-detector
 Content-Type: application/json
 {
         "youtubeUrl": "https://www.youtube.com/watch?v=h1OJFu9dmJA",
