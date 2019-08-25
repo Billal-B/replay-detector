@@ -72,3 +72,4 @@ ldconfig
 # 4. EXECUTE SOME OPENCV EXAMPLES AND COMPILE A DEMONSTRATION
 
 # To complete this step, please visit 'http://milq.github.io/install-opencv-ubuntu-debian'.
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

@@ -1,0 +1,5 @@
+* test on local
+** find video that works well
+* test upload to GCP fct
+* test docker image locally
+* test docker image server

@@ -1,4 +1,4 @@
-% Created 2019-07-22 Mon 19:06
+% Created 2019-08-24 Sat 13:19
 % Intended LaTeX compiler: pdflatex
 \documentclass[11pt]{article}
 \usepackage[utf8x]{inputenc}
@@ -35,8 +35,22 @@
 \tableofcontents
 
 \newpage
+\section{{\bfseries\sffamily TODO} vérif un frame vs une frame}
+\label{sec:org5dc6520}
+\section{{\bfseries\sffamily TODO} faire la distinction plan / transition de plan}
+\label{sec:org22780aa}
+parfois je parle de plan alors que je ne regarde que la transition entre les plan (par ex, avec ORB)\\
+\section{{\bfseries\sffamily TODO} plus détaillé la partie détection de contours}
+\label{sec:org2a6112f}
+rajouter des images :\\
+\begin{enumerate}
+\item le shot (avec les images couleurs)\\
+\item shot => contours\\
+\item contours => mosaic\\
+\item match mosaic\\
+\end{enumerate}
 \section{Sportagraph}
-\label{sec:org7859fcd}
+\label{sec:org379178a}
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R\&D).\\
 Son produit est un DAM (Digital Asset Manager) spéecialisé dans les événements sportifs.\\
 
@@ -63,7 +77,7 @@ Cette fonctionnalité nous permettra de fournir à nos clients un résumé autom
 
 \newpage
 \section{Introduction}
-\label{sec:org6699185}
+\label{sec:org4b39333}
 Au cours des dernières années, les techniques d'apprentissage automatique ont joué un rôle de plus en plus important dans les systèmes de reconnaissance automatique.\\
 Les avancements dans le domaine de l'apprentissage profond et l'accès à un volume massif de données ont permi de mettre en place des solutions de plus en plus performantes.\\
 En particulier, l'adoption globale des téléphones intelligents et de leur caméra intégrée a accru de manière exponentielle le nombre de vidéos disponibles sur Internet, à tel point qu'il est devenu impossible pour l'humain d'ingérer manuellement le contenu de toutes les vidéos disponibles sur la toile.\\
@@ -72,81 +86,81 @@ Plus particulièrement, nous focalisons notre recherche sur les vidéos de sport
 
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.\\
 
-\textbf{Pourquoi les replays ?} Un replay est la retransmission d'une action qui s'est déjà passé au cours d'une vidéo.\\
+\textbf{Pourquoi les replays ?} Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.\\
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.\\
 En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, un replay est une annotation humaine sur une vidéo.\\
 Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.\\
 
-\textbf{Caractéristique des replays} Les replays sont introduits et se terminent par un logo (\cite{Hao_Pan_2002}).\\
+\textbf{Caractéristique des replays} Les replays sont introduits et se terminent par un logo (cite:Hao\(_{\text{Pan}}\)\(_{\text{2002}}\)).\\
 Ces logos ont en général une apparence qui se démarque facilement des autres images dans la vidéo.\\
 Les replays ne sont pas à confondre avec les ralentis.\\
 Les ralentis sont un type particulier de replays où l'action est montrée de nouveau en \emph{slow-motion}, mais tous les replays ne sont pas des ralentis.\\
 C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détecter l'effet de \emph{slow-motion}) n'est pas un bon critère pour la détection de replay.\\
 
 L'objectif de notre recherche est double.\\
-Dans un premier temps, nous mettons en place un système de détection de replays en utilisant uniquement les méthodes "classiques" tels que ORB (\cite{Rublee_2011}).\\
+Dans un premier temps, nous mettons en place un système de détection de replays en utilisant uniquement les méthodes "classiques" tels que ORB (cite:Rublee\(_{\text{2011}}\)).\\
 Ensuite, nous comparons plusieurs approches d'apprentissage automatique pour la tâche de détection dans les vidéos.\\
 Enfin, nous comparons l'efficacité des méthodes de vision par ordinateur "classiques" aux méthodes par apprentissage profond (deep learning).\\
 
 \newpage
 \section{Analyse d'image : état de l'art concernant la détection de replay}
-\label{sec:org5d6ebdf}
+\label{sec:orgaab8344}
 L'un des objectifs de notre recherche est de mettre en place un modèle de détection de replays n'utilisant que des techniques ne faisant pas intervenir d'apprentissage automatique.\\
 Ce modèle servira de base de comparaison avec le modèle par apprentissage automatique que nous proposerons par la suite.\\
 Afin d'avoir le meilleur modèle, nous avons comparé plusieurs approches.\\
 
-La détection de replays est un domaine de recherche à part entière et les articles sont abondants (\cite{Hao_Pan_2002,Ling_Yu_Duan,Chu_2015,Javed_2019} \ldots{}).\\
+La détection de replays est un domaine de recherche à part entière et les articles sont abondants (cite:Hao\(_{\text{Pan}}\)\(_{\text{2002,Ling}}\)\(_{\text{Yu}}\)\(_{\text{Duan,Chu}}\)\(_{\text{2015,Javed}}\)\(_{\text{2019}}\) \ldots{}).\\
 
 \subsection{A Robust Replay Detection}
-\label{sec:org39e415f}
-Cette approche \cite{xu11_robus_replay_detec_algor_soccer_video} détecte les replays en trouvant les logos dans les vidéo.\\
+\label{sec:org5f94d65}
+Cette approche cite:xu11\(_{\text{robus}}\)\(_{\text{replay}}\)\(_{\text{detec}}\)\(_{\text{algor}}\)\(_{\text{soccer}}\)\(_{\text{video}}\) détecte les replays en trouvant les logos dans les vidéo.\\
 Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est présent pendant 0.8 secondes soit 18 frames pour une vidéo de 24 FPS.\\
 Tous les frames qui ont obtenu un score supérieur à un certain seuil sont considérés comme des candidats pour être le \emph{logo template}.\\
 Le \emph{logo template} est le logo qui représente le mieux les logos dans la vidéo et c'est celui-ci qui va servir de référence pour trouver tous les logos.\\
 
 \subsubsection{Calcul du score de la luminance et filtrage des frames}
-\label{sec:org0109f3a}
+\label{sec:org06d3c85}
 L'idée est de parcourir toute la vidéo et de calculer pour chaque frame la différence de luminance qu'il y a entre ce frame et les 17 frames précédents.\\
 Nous obtenons un score L\(_{\text{i}}\) pour chaque frame i dans la vidéo.\\
 Tous les frames dont le score est inférieur à un certain seuil sont écartés, les autres vont servir à trouver le logo template.\\
 
-\subsubsection{Recherche du logo template parmis les frames filtrés}
-\label{sec:orge18753a}
+\subsubsection{Recherche du logo template parmi les frames filtrés}
+\label{sec:orgcacf51f}
 Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.\\
-Pour déterminer le logo template parmis les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.\\
-Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélection le frame m minimisant la distance avec tous les autres frames du cluster.\\
+Pour déterminer le logo template parmi les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.\\
+Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélectionner le frame m minimisant la distance avec tous les autres frames du cluster.\\
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=10cm]{robust_calc_dist.JPG}
-\caption{Formule de la distance entre deux frames dans le cluster \label{calc-dist}}
+\caption{Formule de la distance entre deux frames dans le cluster label:calc-dist}
 \end{figure}
 
 
 \subsubsection{Recherche des logo}
-\label{sec:orga140315}
+\label{sec:orgf0f813a}
 Une fois que le logo template est déterminé, chaque logo trouvé en précédemment va être comparé avec le logo template.\\
-La mesure de comparaison est la distance (figure \ref{calc-dist}) qu'il y a entre le frame et le template dans le cluster.\\
+La mesure de comparaison est la distance (figure ref:calc-dist) qu'il y a entre le frame et le template dans le cluster.\\
 Tous les frames qui ont une distance inférieure à un certain threshold sont considérés comme des logos.\\
 
 \subsubsection{Recherche des replays}
-\label{sec:orgfc4aaca}
+\label{sec:org40e1e37}
 Une fois que les logos sont détectés, nous pouvons trouver les replays en cherchant les paires de logos éloignés de moins de 80 seconde (durée maximum d'un replay).\\
 
 \subsubsection{Résultats des auteurs}
-\label{sec:org7c52c2e}
+\label{sec:orgc2cfb95}
 \section{{\bfseries\sffamily TODO} résultat auteurs pour robust replay}
-\label{sec:orga1a0e99}
+\label{sec:org76b9004}
 
 
 
 
 \subsection{Mean Shift Based video Segment Representation And Applications To Replay Detection}
-\label{sec:orga271db2}
-Dans cet article \cite{Ling_Yu_Duan}, les auteurs présentent une méthode permettant de détecter les replays.\\
-L'idée est d'apprendre une base de représentation compressée de logos avec une méthode comme le spectral hashing (\cite{NIPS2008_3383}), puis de se servir de cette base de données pour trouver les logo au début à la fin de replays.\\
+\label{sec:org7f75fd6}
+Dans cet article cite:Ling\(_{\text{Yu}}\)\(_{\text{Duan}}\), les auteurs présentent une méthode permettant de détecter les replays.\\
+L'idée est d'apprendre une base de représentation compressée de logos avec une méthode comme le spectral hashing (cite:NIPS2008\(_{\text{3383}}\)), puis de se servir de cette base de données pour trouver les logo au début à la fin de replays.\\
 \subsubsection{Algorithme}
-\label{sec:orgb02b649}
+\label{sec:org6a1f06f}
 \begin{verbatim}
 L = []
 R = []
@@ -165,13 +179,13 @@ La distance utilisée pour comparer le hash des images est la distance de Wasser
 
 
 \subsubsection{Résultats}
-\label{sec:org3187a14}
+\label{sec:orged93cd3}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.9\linewidth]{mean_shift_res.png}
-\caption{Performance sur la tâche de détection de replay :\label{mean-shift-res}}
+\caption{Performance sur la tâche de détection de replay :label:mean-shift-res}
 \end{figure}
-Les résultats obtenus par les auteurs sont présentés dans la Figure \ref{mean-shift-res}.\\
+Les résultats obtenus par les auteurs sont présentés dans la Figure ref:mean-shift-res.\\
 Ceux-ci sont bons, mais l'ensemble de test n'est pas assez représentatif (seulement quatres vidéos).\\
 Les avantages des représentations hashées pour les images sont les suivants :\\
 \begin{itemize}
@@ -183,12 +197,12 @@ Pour ces raisons, cette approche est tout à fait adaptée à la reconnaissance 
 
 \newpage
 \section{Apprentissage automatique : les bases théoriques}
-\label{sec:org59606d4}
+\label{sec:org5a765a6}
 Dans notre recherche, nous allons aborder plusieurs types de réseaux d'apprentissage automatique.\\
 Nous allons présenter dans cette partie les principes fondamentaux à la bonne compréhension de ces derniers.\\
 
 \subsection{Réseaux de neurones récurrents (RNN)}
-\label{sec:orgbc53f65}
+\label{sec:orga09d77e}
 Les RNN (Recurrent Neural Networks), ou réseaux de neurones récurrents (RNR) en français, sont capables de répéter leur couche cachée, en utilisant comme entrée la sortie de toutes les couches précédentes et de générer une sortie pour chaque couche.\\
 Cela va leur permettre de prendre en entrée des séquences et de retourner des séquences.\\
 En effet, pour une entrée [e\(_{\text{1}}\), e\(_{\text{2}}\),\ldots{}, e\(_{\text{n}}\)] et un initialiseur s\(_{\text{0}}\), le RNN va répéter n fois sa couche cachée, de telle sorte à générer une sortie s\(_{\text{1}}\) associée à la couche 1 et à l'entrée (e\(_{\text{1}}\), s\(_{\text{0}}\)); puis il va générer une sortie s\(_{\text{2}}\) associée à la couche 2 et à l'entrée (e\(_{\text{2}}\), s\(_{\text{1}}\)), etc \ldots{}\\
@@ -201,7 +215,7 @@ Pour apprendre un modèle, le RNN va avoir besoin d'un ensemble d'entraînement 
 La nature récursive de ces réseaux les rend particulièrement adaptés aux tâches de traitement du langage naturel ou pour traiter la temporalité.\\
 
 \subsection{LSTM}
-\label{sec:org60194d8}
+\label{sec:orgf5f3e70}
 Les LSTM (Long Short Term Memory) sont un type de RNN \textbf{à portes (gated RNN)}.\\
 Ces portes vont permettre de stocker l'information apprise par le réseau à travers le temps.\\
 À la différence des RNN classiques, les LSTM sont capables d'oublier de l'information grâce à leur \textbf{leaky unit} afin d'éviter une explosion ou une disparition du gradient.\\
@@ -210,11 +224,11 @@ La puissance de ces réseaux à portes est que c'est le réseau qui va apprendre
 Concrétement, cela va leur permettre de pouvoir capturer des dépendances à long terme de manière bien plus efficace que les RNN classiques.\\
 
 \subsection{CNN}
-\label{sec:org5697920}
+\label{sec:orgaf45cf3}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=7cm]{convolution.png}
-\caption{Opération de convolution \label{convolution}}
+\caption{Opération de convolution label:convolution}
 \end{figure}
 Les CNN (Convolutional Neural Networks), ou réseaux de neurones convolutifs (RNC) en français, sont un type de réseau de neurones qui utilisent la convolution au lieu de la multiplication matricielle dans au moins une de leurs couches.\\
 La convolution est une opération qui prend en argument l'entrée (typiquement un vecteur représentant une donnée) et un \textbf{noyau} (les paramètres qui vont être appris par le CNN) et renvoie une \textbf{carte de caractéristiques} (feature map).\\
@@ -224,11 +238,11 @@ La fonction de convolution a trois caractéristiques importantes : l'\textbf{int
 La couche de convolution est généralement composée de la fonction de convolution suivie d'une fonction d'activation non linéaire (par exemple, ReLU ou tanh) et d'une d'une fonction de \textbf{pooling}.\\
 
 \subsubsection{Intéraction parcimonieuse}
-\label{sec:org75688ae}
+\label{sec:orgf9b2af6}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=8cm]{sparse_vs_dense.png}
-\caption{Intéraction parcimonieuse (en haut), intéraction non parcimonieuse (en bas) \label{sparse-vs-dense}}
+\caption{Intéraction parcimonieuse (en haut), intéraction non parcimonieuse (en bas) label:sparse-vs-dense}
 \end{figure}
 
 À la différence des réseaux classiques où toutes les sorties intéragissent avec toutes les entrées, les réseaux à convolution ont des \textbf{intéractions parcimonieuses}.\\
@@ -241,25 +255,25 @@ Par conséquent, ils ont donc ont besoin de moins de mémoire (pour la même tâ
 C'est l'une des raisons faisant que les réseaux à convolution sont très efficaces pour le traitement d'image.\\
 
 \subsubsection{Partage de paramètres}
-\label{sec:orge98185b}
+\label{sec:orgb25ce33}
 Dans un réseau classique, un poid (un paramètre) est associé à chaque paramètre d'entrée et ne sert qu'une fois.\\
 Tandis que dans un réseau convolutif, le noyau utilisé par une couche de convolution est le même sur toutes les matrices représentant l'entrée.\\
 Grâce à ce \textbf{partage des paramètres}, il n'y a que les poids du noyau à apprendre au lieu d'un poid pour chaque neurone d'entrée.\\
 De plus, la taille du noyau est en général largement inférieure à celle de la couche d'entrée.\\
 
 \subsubsection{Représentations équivariantes}
-\label{sec:orgc22a6d3}
+\label{sec:org4cf1469}
 Une fonction est \textbf{équivariante} si, quand l'entrée change, la sortie change de la même manière.\\
 En terme mathématique, cela signifique que si \(y = f(x)\) alors \(g(y) = g(f(x))\).\\
 Les réseaux convolutifs sont équivariants à la translation.\\
 Dans le cas de l'image, celà signifie que le déplacement des pixels n'a pas d'influence sur le réseau.\\
 
 \subsubsection{Pooling}
-\label{sec:org302d623}
+\label{sec:orgb914a5c}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=8cm]{pooling.png}
-\caption{Pooling \& invariance \label{pooling}}
+\caption{Pooling \& invariance label:pooling}
 \end{figure}
 La fonction de pooling va modifier la sortie de la couche de convolution.\\
 Pour chaque valeur dans la carte des caractéristiques à la sortie de la convolution (après la fonction d'activation), la fonction de pooling va remplacer celle-ci en fonction de la valeur des cases voisines dans la carte.\\
@@ -272,13 +286,13 @@ Nous pouvons voir le pooling comme un résumé de la carte des caractéristiques
 
 \newpage
 \section{Apprentissage profond : état de l'art pour la reconnaissance d'action dans les vidéos}
-\label{sec:org902afaf}
+\label{sec:orgd3b2d4e}
 Nous nous intéressons à l'état de l'art concernant la détection d'action dans les vidéos.\\
 En effet, la transition d'un logo s'effectue sur plusieurs frames consécutifs; il y a donc une composante temporelle à notre recherche, et nous pouvons considérer la transition d'un logo comme une action.\\
 
 \subsection{Two-Stream Convolutional Networks for Action Recognition in Videos}
-\label{sec:org5bf81e1}
-Cet article est écrit par Karen Simonyan et Andrew Zisserman \cite{DBLP:journals/corr/SimonyanZ14}. Dans celui-ci, ils proposent de séparer la tâche de reconnaissance d'action dans les vidéos en deux parties : une composante spatiale et une composante temporelle.\\
+\label{sec:org30b41e9}
+Cet article est écrit par Karen Simonyan et Andrew Zisserman cite:DBLP:journals/corr/SimonyanZ14. Dans celui-ci, ils proposent de séparer la tâche de reconnaissance d'action dans les vidéos en deux parties : une composante spatiale et une composante temporelle.\\
 
 La composante spatiale contient l'information concernant les objets dans la vidéo; tandis que la composante temporelle l'information sur les déplacements de ces objets et de la caméra.\\
 A partir de ces observations, les auteurs proposent d'entraîner un classifieur spatial (Spatial stream ConvNet) et un classifieur temporel (Temporal stream ConvNet).\\
@@ -286,18 +300,18 @@ A partir de ces observations, les auteurs proposent d'entraîner un classifieur 
 Ces classifieurs sont des réseaux de neurones convolutifs profonds.\\
 
 \subsubsection{Classifieur spatial}
-\label{sec:orgf18a043}
+\label{sec:org804b02e}
 Ce réseau a une architecture de classifieur d'image classique.\\
 Il va permettre de donner un indice fort pour la prédiction, car certaines actions sont très liées à certains objets.\\
 De plus, la recherche dans le domaine de la classification est un domaine à part entière; toutes les avancées dans le domaine augmenteront l'efficacité de ce classifieur.\\
 Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches par transfer learning sont efficaces.\\
 
 \subsubsection{Classifieur temporel}
-\label{sec:org834a790}
+\label{sec:orgdb13ee5}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=12cm]{optical_flow.png}
-\caption{Flux optique \label{optical-flow} \label{opt-flow}}
+\caption{Flux optique label:optical-flow label:opt-flow}
 \end{figure}
 L'innovation de l'article vient de l'introduction du classifieur temporel.\\
 
@@ -312,11 +326,11 @@ Ainsi, des images représentant le flux optique entre les différents frames de 
 
 Chacunes de ces images servira d'entrée au CNN (classifieur temporel).\\
 \subsubsection{Méthode d'évalutation et résultats obtenus}
-\label{sec:orgd1fee39}
+\label{sec:orga203de6}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=13cm]{two_stream_res.png}
-\caption{Résultats obtenus par l'approche Two-stream model \label{two-stream-res}}
+\caption{Résultats obtenus par l'approche Two-stream model label:two-stream-res}
 \end{figure}
 
 Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).\\
@@ -328,7 +342,7 @@ Les dataset utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB
 \item fusion par SVM (by SVM) : un SVM multiclasse linéaire est entrainé pour prédire la classe à partir du softmax des scores L2-normalisés.\\
 \end{itemize}
 
-Les résultats (figure \ref{two-stream-res}) montrent l'efficacité de leur méthode par rapport aux autres approches état de l'art.\\
+Les résultats (figure ref:two-stream-res) montrent l'efficacité de leur méthode par rapport aux autres approches état de l'art.\\
 
 Nous pouvons voir que leur approche two-stream avec fusion SVM est la plus efficace sur le dataset UCF-101, et qu'elle a aussi de bons résultats sur HMDB-51.\\
 
@@ -338,10 +352,10 @@ En effet, le classifieur d'image simple (spatial) n'a que 73.0\% (UCF-101) et 40
 Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'images indépendantes, mais comme une suite de séquence avec un lien entre chaque élément de la séquence. La temporalité a une très grande importance pour l'analyse de vidéos.\\
 
 \subsection{Learning Spatiotemporal Features with 3D Convolutional Networks}
-\label{sec:org78282ed}
-Dans cet article \cite{Tran_2015}, les auteurs proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neurones à convolution.\\
+\label{sec:org0abede3}
+Dans cet article cite:Tran\(_{\text{2015}}\), les auteurs proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neurones à convolution.\\
 
-Ils font l'hypothése qu'un réseau avec une couche de convolution 3D qui prend en entrée une séquence d'images est capable d'apprendre efficacement les mouvements des objets dans les vidéos.\\
+Ils font l'hypothèse qu'un réseau avec une couche de convolution 3D qui prend en entrée une séquence d'images est capable d'apprendre efficacement les mouvements des objets dans les vidéos.\\
 
 L'objectif est d'apprendre des caractéristiques qui soient :\\
 \begin{itemize}
@@ -352,11 +366,11 @@ L'objectif est d'apprendre des caractéristiques qui soient :\\
 \end{itemize}
 
 \subsubsection{C3D: Convolution et pooling 3D}
-\label{sec:org07a257d}
+\label{sec:orgd753fb0}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.9\linewidth]{c3d_idea.png}
-\caption{Convolution 2D sur une séquence d'images (gauche), convolution 3D sur une séquence d'images (droite) \label{c3d-idea}}
+\caption{Convolution 2D sur une séquence d'images (gauche), convolution 3D sur une séquence d'images (droite) label:c3d-idea}
 \end{figure}
 Les auteurs appellent leur approche C3D (3D ConvNet).\\
 Comparé aux réseaux à convolution 2D, C3D est capable de modéliser plus efficacement l'information spatio-temporelle grâce à la convolution et au pooling sur trois dimensions.\\
@@ -365,11 +379,11 @@ C'est pourquoi les réseaux à convolution 2D perdent l'information temporelle a
 
 
 \subsubsection{Architecture et entraînement du réseau}
-\label{sec:org57a0589}
+\label{sec:org0ab1d54}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=13cm]{c3d_architecture.jpg}
-\caption{Architecture C3D \label{arch-c3d}}
+\caption{Architecture C3D label:arch-c3d}
 \end{figure}
 L'entrée de ce réseau est de dimension c * l * h * w où c est le nombre de canaux des images (3 pour la couleur, 1 pour les images en noir et blanc), l le nombre d'images dans les séquences, h la longueur et w la largeur en pixel des images.\\
 
@@ -389,76 +403,76 @@ Ensuite, chacun de ces clips va être passés au réseau et l'avant dernière co
 \textbf{Qu'est-ce que ce réseau apprend ?} Ce réseau apprend à se focaliser sur l'image des premiers frames, et à traquer leur déplacement dans les frames suivants.\\
 
 \subsubsection{Résultat pour la tâche de reconnaissance d'action}
-\label{sec:orgcfc3657}
+\label{sec:orgc14625d}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=7cm]{c3d_result.jpg}
-\caption{Résultats pour l'approche Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) comparés à d'autres approches état de l'art \label{c3d-res}}
+\caption{Résultats pour l'approche Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) comparés à d'autres approches état de l'art label:c3d-res}
 \end{figure}
-Ces résultats (figure \ref{c3d-res}) ont été obtenus par les auteurs pour la tâche de reconnaissance d'action sur le corpus de vidéo UCF101.\\
+Ces résultats (figure ref:c3d-res) ont été obtenus par les auteurs pour la tâche de reconnaissance d'action sur le corpus de vidéo UCF101.\\
 Nous voyons que l'approche par réseau à convolution 3D est la plus efficace.\\
 
 \subsubsection{Conclusion}
-\label{sec:org12268f9}
+\label{sec:org482e53c}
 Dans cet article, les auteurs ont adressé le problème de la temporalité dans les vidéos.\\
 Ils ont montré qu'un réseau à convolution 3D est capable de modéliser l'information temporelle et spatiale simultanément, et donc d'obtenir de meilleurs résultats que les réseaux à convolution 2D sur plusieurs tâches d'analyse de vidéos.\\
 De plus, cette approche est très élégante car elle fonctionne sans ajout artificiel de caractéristiques (comme le flux optique), c'est le réseau qui va se charger d'apprendre ce dont il a besoin pour apprendre la temporalité.\\
 
 \subsection{Beyond Short Snippets: Deep Networks for Video Classification}
-\label{sec:orgbbfc719}
-Dans cet article \cite{Joe_Yue_Hei_Ng_2015}, les auteurs proposent d'utiliser une architecture hybride à base de CNN et de RNN (LSTM) pour l'analyse vidéo.\\
+\label{sec:orgd6fa1c4}
+Dans cet article cite:Joe\(_{\text{Yue}}\)\(_{\text{Hei}}\)\(_{\text{Ng}}\)\(_{\text{2015}}\), les auteurs proposent d'utiliser une architecture hybride à base de CNN et de RNN (LSTM) pour l'analyse vidéo.\\
 Leur objectif est d'apprendre des dépendances à long terme dans les vidéos, d'où l'utilisation d'un LSTM.\\
 Les CNN sont des réseaux particulièrement efficaces pour analyser les frames des vidéos, c'est le CNN qui va se charger de la composante spatiale de la vidéo.\\
 Les LSTM va servir à apprendre la composante temporelle.\\
 
 \subsubsection{Approche}
-\label{sec:org3d48e34}
+\label{sec:orgfef058f}
 L'objectif des auteurs est d'apprendre des dépendances à long terme dans les vidéos.\\
 Les réseaux à convolution sont très efficaces pour l'analyse d'image; mais leur coût computationnel est très élevé.\\
 C'est pourquoi, il n'est pas possible de se servir d'un CNN pour apprendre les dépendances à long terme; en effet, il faudrait que le réseau prenne en entrée toute la vidéo (ou bien une grande partie), ce qui n'est pas possible avec la puissance de calcul actuelle.\\
 Les auteurs font l'hypothèse que tous les frames dans la vidéo ne sont pas utiles, et qu'il est judicieux de ne garder qu'un sous-ensemble des frames de la vidéo; ils proposent donc de ne traiter qu'un frame par seconde. L'intérêt de ne garder qu'un sous ensemble des images de la vidéo et qu'il va donc être possible de traiter la vidéo sur une plage temporelle plus large pour le même coût en calcul.\\
 Néanmoins, ne regarder qu'une seule image par seconde dans la vidéo ne préserve pas le déplacement des pixels entre l'instant t et l'instant t + 1 (en seconde) et donc l'information du mouvement des objets.\\
-Pour palier à ce problème, le flux optique (de la même manière que \cite{DBLP:journals/corr/SimonyanZ14}) est calculé entre les frames adjacents.\\
+Pour palier à ce problème, le flux optique (de la même manière que cite:DBLP:journals/corr/SimonyanZ14) est calculé entre les frames adjacents.\\
 Ainsi, l'information temporelle et l'information spatialle sont préservées, tout en ne traitant qu'une seule image par seconde, ce qui réduit beaucoup le coût de calcul.\\
 Pour apprendre les dépendances qu'il y a entre les frames, un LSTM est utilisé; celui-ci va traiter les vidéo comme des séquences d'images et va apprendre à prédire la classe de la vidéo en fonction de ces séquences.\\
 \subsubsection{Architecture}
-\label{sec:orgdf9e2d2}
+\label{sec:org33f7e8d}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=8cm]{cnn_lstm.PNG}
-\caption{Architecture du LSTM \label{arch-lstm}}
+\caption{Architecture du LSTM label:arch-lstm}
 \end{figure}
-Comme pour \cite{DBLP:journals/corr/SimonyanZ14}, un réseau à convolution va être utiliser pour extraire les caractéristiques visuelles de la vidéo.\\
+Comme pour cite:DBLP:journals/corr/SimonyanZ14, un réseau à convolution va être utiliser pour extraire les caractéristiques visuelles de la vidéo.\\
 Les architectures utilisées pour ce réseau sont GoogLeNet et AlexNet.\\
 
-L'architecture proposée pour le LSTM est présentée en \ref{arch-lstm}.\\
+L'architecture proposée pour le LSTM est présentée en ref:arch-lstm.\\
 La sortie du CNN est processée par propagation avant à travers cinq couches de LSTM.\\
 La couche de sortie du LSTM est munie de la fonction softmax et prédit une classe à chaque étape.\\
 Les paramètres du réseau à convolution et de la couche de sortie du LSTM sont partagés pour toutes les étapes.\\
 
 \subsubsection{Utilisation du flux optique}
-\label{sec:orgf130264}
+\label{sec:org91f23a8}
 Le flux optique encode l'information des déplacements des objets dans la vidéo.\\
-Comme pour l'approche \cite{DBLP:journals/corr/SimonyanZ14}, les images de flux vont être pré-calculées et servir lors de l'entrainement du CNN.\\
+Comme pour l'approche cite:DBLP:journals/corr/SimonyanZ14, les images de flux vont être pré-calculées et servir lors de l'entrainement du CNN.\\
 
 \subsubsection{Résultat obtenu}
-\label{sec:org4f43fa7}
+\label{sec:org8898779}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=10cm]{cnn_lstm_res.png}
-\caption{Résultat obtenu pour l'approche combinant CNN et LSTM (LSTM with 30 Frame Unroll) \label{cnn_lstm}}
+\caption{Résultat obtenu pour l'approche combinant CNN et LSTM (LSTM with 30 Frame Unroll) label:cnn\(_{\text{lstm}}\)}
 \end{figure}
 Les auteurs évaluent leur approche sur le dataset Sports-1M et UCF-101 sur la tâche de classification de vidéos.\\
-Nous pouvons voir que leur approche obtient les meilleurs résultats (88.6\% contre 88.0\% pour \cite{DBLP:journals/corr/SimonyanZ14}).\\
+Nous pouvons voir que leur approche obtient les meilleurs résultats (88.6\% contre 88.0\% pour cite:DBLP:journals/corr/SimonyanZ14).\\
 Ces résultats sont intéressants car à la différence des autres approches, celle-ci est capable de prédire une classe pour des morceaux de vidéos pouvant aller jusqu'à deux minutes (contre quelques secondes pour les autres).\\
-De plus, les meilleurs résultats sont là aussi obtenus en utilisant le flux optique, confirmant l'hypothèse faite par \cite{DBLP:journals/corr/SimonyanZ14} que ce dernier est nécessaire pour le traitement des vidéos.\\
+De plus, les meilleurs résultats sont là aussi obtenus en utilisant le flux optique, confirmant l'hypothèse faite par cite:DBLP:journals/corr/SimonyanZ14 que ce dernier est nécessaire pour le traitement des vidéos.\\
 
 Dans notre cas, cette approche n'est pas la plus adaptée. En effet, nous souhaitons reconnaitre les logos dans les vidéos, or un logo ne dure pas plus longtemps que quelques secondes et les dépendances à long-terme que le LSTM va apprendre ne nous intéressent pas.\\
 Néanmoins, une variante de celle-ci où le LSTM reçoit en entrée une séquence de frames consécutifs (et pas une séquence formée d'un frame par seconde) pourrait avoir de bons résultats pour la tâche de détection de logos.\\
 
 \newpage
 \section{Les approches proposées}
-\label{sec:orgd5a30ed}
+\label{sec:orgbb25027}
 L'objectif de notre recherche est de détecter les replays dans les vidéos de sport\\
 
 Pour détecter les replays, nous faisons les hypothèses suivantes :\\
@@ -473,25 +487,25 @@ Pour détecter les replays, nous faisons les hypothèses suivantes :\\
 Nous proposons plusieurs approches permettant de détecter les logos de replay dans les vidéos de sport.\\
 En premier lieu, nous proposons deux approches n'utilisant que des algorithmes d'analyse d'images classiques (flouttage, filtre de Canny, ORB, \ldots{}) :\\
 \begin{itemize}
-\item la première se sert de l'algorithme ORB (\cite{Rublee_2011}) et de l'algorithme K-Means\\
+\item la première se sert de l'algorithme ORB (cite:Rublee\(_{\text{2011}}\)) et de l'algorithme K-Means\\
 \item la seconde utilise la détection de contours pour trouver les images avec des contours similaires dans la vidéo\\
 \end{itemize}
 Ensuite, nous présentons deux approches par apprentissage profond :\\
 \begin{itemize}
-\item la première utilise un réseau à convolution 3D sur une séquence d'images (similaire à \cite{Tran_2015})\\
+\item la première utilise un réseau à convolution 3D sur une séquence d'images (similaire à cite:Tran\(_{\text{2015}}\))\\
 \item la seconde utilise un réseau à convolution 2D sur des images représentant le flux optique des objets dans la vidéo\\
 \end{itemize}
 
 \subsection{Détection des plans}
-\label{sec:org933e647}
+\label{sec:orgd8e728c}
 Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logo pouvant se trouver au début et à la fin des replays.\\
 Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche à tous les frames qui sont entre deux plans.\\
 
 C'est pourquoi nous allons chercher une méthode permettant de détecter les changements de plan dans les vidéos.\\
 
 \subsubsection{Online, Simultaneous Shot Boundary Detection And Key Frame Extraction For Sports Videos Using Rank Tracing}
-\label{sec:org9ff91a1}
-Cette méthode est proposée par W. Abd-Almageed en 2008 \cite{Abd_Almageed_2008}.\\
+\label{sec:org95818b0}
+Cette méthode est proposée par W. Abd-Almageed en 2008 cite:Abd\(_{\text{Almageed}}\)\(_{\text{2008}}\).\\
 
 Chaque frame est converti en HSV et les histogrammes H, S et V sont calculés.\\
 Un vecteur est formé pour chaque frame à partir de ces histogrammes.\\
@@ -499,7 +513,7 @@ Ensuite, une matrice M de dimension N * L, représentant une fenêtre de N frame
 
 L'algorithme SVD (singular value decomposition) va être appliqué sur M.  \(M = UWV\), où W est la matrice de valeurs singulières.\\
 
-Les diagonales de la matrice W comportent des poids S ordonnés de manière non croissante.\\
+Les diagonales de la matrice W comportent des poids S ordonnés de manière décroissante.\\
 Le premier poid S\(_{\text{1}}\) est le poid maximal. Ces poids représentent l'information contenue dans le vecteur V.\\
 
 Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre d'éléments s dans S tel que s/S1 > threshold. Le rang va être calculé pour chaque fenêtre de frames dans la vidéo.\\
@@ -507,7 +521,7 @@ Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre 
 Si le rang d'une fenêtre est plus que grand que le rang de la fenêtre avant elle, alors le contenu visuel de la fenêtre est différent de la fenêtre précédente.\\
 À l'inverse, si le rang est inférieure à la fenêtre précédente, alors le contenu visuel se stabilise. S'il est de 1, alors c'est stable.\\
 
-Le début d'un frame est celui qui maximise le rang parmis les fenêtres environnantes.\\
+Le début d'un frame est celui qui maximise le rang parmi les fenêtres environnantes.\\
 
 Cette méthode pour trouver les plans dans une vidéo est très efficace, et nous servira tout au long de la suite de notre recherche.\\
 
@@ -519,13 +533,11 @@ Nous pouvons donc nous permettre d’utiliser des algorithmes plus complexes que
 De plus, la segmentation en plan réduit le champs de recherche des frames logo, et donc le nombre de faux positifs.\\
 
 \subsection{Analyse d'image - Première approche : ORB}
-\label{sec:org01aa98d}
+\label{sec:orgaa3ec74}
 Dans cette approche, nous cherchons à reconnaître les logos dans les vidéo.\\
 Pour ce faire, nous optons pour une approche de clustering.\\
-L'idée est de clusteriser la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.\\
+L'idée est de séparer la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.\\
 
-\subsubsection{Extraction des caractéristiques}
-\label{sec:org39ba274}
 Il existe plusieurs manières de représenter une image, par exemple :\\
 \begin{itemize}
 \item une matrice w * l * c où c est le nombre de canal (3 pour une image couleur, 1 pour une image en noir et blanc), w et l la largeur et la longueur (resp.) de l'image en pixel\\
@@ -534,25 +546,26 @@ Il existe plusieurs manières de représenter une image, par exemple :\\
 \end{itemize}
 Néanmoins, aucune de ces méthodes ne permet de vectoriser l'image de tel sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.\\
 
-Dans cette partie, nous utilisons l'algorithme ORB (\cite{Rublee_2011}) pour extraire des caractéristiques à partir des frames d'une vidéo.\\
+De plus dans notre cas, nous souhaitons regrouper non pas des frames (images) mais des plans (séquence d'images).\\
 
-\subsubsection{KMeans}
-\label{sec:org639d634}
-OpenCV implémente aussi l'algorithme KMeans. Celui-ci permet de regrouper les objets similaires en fonction de leur feature.\\
+OpenCV implémente l'algorithme KMeans. Celui-ci permet de regrouper les objets similaires en fonction de leurs caractéristiques.\\
 Dans notre cas, il va nous permettre de créer deux groupes d'images : logo / non logo.\\
 L'avantage de KMeans est qu'il est est très rapide et assez efficace dans la plupart des cas.\\
 C'est l'un des algorithmes de clusterisation les plus utilisés.\\
 
+Pour fonctionner, KMeans a besoin que les objets que l'on souhaite séparer en groupe soit sous forme de vecteurs et que ces vecteurs soient discriminants. C'est à dire qu'un frame logo ne doit pas être proche dans l'espace d'un frame non-logo.\\
+
+Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques à partir pour chaque plan dans la vidéo.\\
 
 \subsubsection{Première expérimentation : 1 frame par shot}
-\label{sec:orge6e9550}
+\label{sec:orge0bee69}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=8cm]{orb_simple_res.JPG}
-\caption{Caractèristiques extraites par ORB (en vert), pour une seule image par plan}
+\caption{Caractéristiques extraites par ORB (en vert), pour une seule image par plan}
 \end{figure}
 
-Ici, nous ne récupérons les caractèristiques que d'une seule image par plan.\\
+Ici, nous ne récupérons les caractéristiques que d'une seule image par plan.\\
 
 L'algorithme est le suivant :\\
 \begin{verbatim}
@@ -564,20 +577,20 @@ L'algorithme est le suivant :\\
   - le groupe le plus petit est le groupe des logo
 \end{verbatim}
 
-\subsubsection{Première expérimentation : 1 fenêtre de frame par shot:}
-\label{sec:org50a7bde}
+\subsubsection{Deuxième expérimentation : 1 fenêtre de frame par shot:}
+\label{sec:orgf059b59}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=8cm]{akaze_window_res.jpg}
-\caption{Caractèristiques extraites par ORB (en vert) pour un plan (aggrégat des caractèristiques de chaque image dans le plan) \label{orb-window}}
+\caption{Caractéristiques extraites par ORB (en vert) pour un plan (aggrégat des caractéristiques de chaque image dans le plan) label:orb-window}
 \end{figure}
 L'approche précédente ne récupère qu'une seule image par plan.\\
 Or, les logos sont présents sur plusieurs frames consécutifs.\\
-Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractèristiques pour chaque frame (voir figure \ref{orb-window}).\\
+Dans cette approche, nous récupérons plusieurs images consécutives pour chaque plan, et nous extrayons les caractéristiques pour chaque frame (voir figure ref:orb-window).\\
 
 L'algorithme est le suivant :\\
 \begin{verbatim}
-- Récupérer W frames pour chaque shot, les régrouper en une fenêtre
+- Récupérer W frames pour chaque shot, les regrouper en une fenêtre
   - nous obtenons |S| fenêtres de dimension W, où W est le nombre de frame
 - Pour chaque fenêtre, calculer les features de chacun de ses frames (ORB)
   - Nous obtenons un vecteur de dimension |S*W|
@@ -586,21 +599,21 @@ L'algorithme est le suivant :\\
 \end{verbatim}
 
 \subsection{Analyse d'image - Seconde approche : matching de contours}
-\label{sec:org86ce973}
+\label{sec:orgb779e19}
 Dans cette approche, nous allons chercher les frames qui ont des formes en commun dans la vidéo.\\
 En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec \(2 < t' - t < 90\) (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et t'.\\
 
-Dans cette méthode, nous utilisons là aussi le découpage en plan (\cite{Abd_Almageed_2008}) pour réduire la zone de recherche des logos de début et de fin des replays.\\
+Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd\(_{\text{Almageed}}\)\(_{\text{2008}}\)) pour réduire la zone de recherche des logos de début et de fin des replays.\\
 
-L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leur frame.\\
+L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.\\
 
 
 \subsubsection{Mosaique de plan}
-\label{sec:orge618fb6}
+\label{sec:org7c4515c}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=16cm]{mosaique_add.png}
-\caption{ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) \label{mosaic}}
+\caption{ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) label:mosaic}
 \end{figure}
 Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque plan avec chaque frame des plans voisins.\\
 
@@ -611,10 +624,10 @@ Chaque image est de dimension I * I * width * height où I est le nombre de fram
 Ces images sont des matrices d'images qui vont permettre de comparer rapidement deux shot.\\
 La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.\\
 
-Pour comparer deux shot (figure \ref{mosaic}), il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).\\
+Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).\\
 
 \subsubsection{Algorithme}
-\label{sec:orgc06b6b2}
+\label{sec:orgcc2333e}
 \begin{verbatim}
 - Pré traitement sur les shots
   1. Redimensionner
@@ -638,32 +651,57 @@ Notre algorithme est sensible au plan fixe et aux images avec beaucoup de bruits
 Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur les plans, notamment en rajoutant du blur ou en supprimant le background, néanmoins, nous ne sommes pas parvenus à filtrer 100\% des faux-positifs.\\
 
 \subsection{Apprentissage profond - Première approche : convolution 3D}
-\label{sec:org81a01a1}
-Dans cette approche, nous allons implémenter une méthode similaire à \cite{Tran_2015}.\\
+\label{sec:org452f8dc}
+Dans cette approche, nous allons implémenter une méthode similaire à cite:Tran\(_{\text{2015}}\).\\
 L'idée va être d'entrainer un réseau à convolution avec une couche de convolution 3D.\\
 Cette couche va prendre en entrée une séquence d'images et va prédire une classe logo ou non-logo.\\
-Pour réduire la zone de recherche, seulement les séquences d'images entre deux plans (détectées avec \cite{Abd_Almageed_2008}) seront traitées.\\
+Pour réduire la zone de recherche, seulement les séquences d'images entre deux plans (détectées avec cite:Abd\(_{\text{Almageed}}\)\(_{\text{2008}}\)) seront traitées.\\
 Lors de l'entrainement, le réseau va apprendre à partir de séquences d'images labellisées (logo/non-logo).\\
-Comme pour \cite{Tran_2015}, nous pensons que la convolution 3D va permettre au réseau d'apprendre l'apparence des logos mais aussi leur animation dans la vidéo.\\
-\subsection{Apprentissage profond - Première approche : classifieur de flux optique}
-\label{sec:org50d4243}
+Comme pour cite:Tran\(_{\text{2015}}\), nous pensons que la convolution 3D va permettre au réseau d'apprendre l'apparence des logos mais aussi leur animation dans la vidéo.\\
+\subsection{Flux optique}
+\label{sec:orgd1d3734}
+\begin{center}
+\includegraphics[width=.9\linewidth]{optical_flow2.png}
+\end{center}
+Le flux optique décrit le déplacement des objets entre deux frames consécutifs, ce mouvement peut être causé par un déplacement de la caméra ou de l'objet lui-même.\\
+Le flux optique est une matrice X * Y * D, où X et Y sont l'axe des absisses et des ordonnées (resp.) dans l'image, et D une droite décrivant le déplacement du pixel à la position (x,y) entre le frame t et le frame t + 1.\\
+
+De la même manière que pour cite:wang11\(_{\text{action}}\), nous allons traquer le déplacement des objets grâce au flux optique.\\
+Il existe deux types d'algorithme de calcul du flux optique :\\
+\begin{itemize}
+\item sparse/creux : seulement les déplacements de certains points d'intéret vont être traqués (méthode de Lucas-Kanade)\\
+\item dense : le déplacement de tous les points dans l'image vont être traqués (algorithme de Gunner Farneback)\\
+\end{itemize}
+Le calcul du flux optique dense est plus couteux mais à l'avantage de ne pas nécessiter de déterminer les points d'intéret dans l'image avant de calculer le flux optique.\\
+
+\subsection{Apprentissage profond - Deuxième approche : convolution 2D sur des images de flux optique}
+\label{sec:org1c0af44}
 Dans cette approche, nous allons entraîner un classifieur d'image de flux optique.\\
-Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (\cite{Abd_Almageed_2008}).\\
-Pour chaque séquence d'images comprise entre deux plans, le flux optique va être calculé pour celle-ci (entre l'image au début de la séquence et l'image à la fin de la séquence) puis une image va être générée.\\
-Le réseau va apprendre à classifier les séquences en logo/non-logo à partir de ces images de flux optique.\\
-\newpage
+L'objectif est de capturer l'information du mouvement des objets dans des séquences d'images grâce au flux optique, puis de projeter cette information dans un plan 2D (donc des images) afin de pouvoir entrainer un classifieur à partir de ces représentations 2D.\\
+Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd\(_{\text{Almageed}}\)\(_{\text{2008}}\)).\\
+
+\subsection{Apprentissage profond - Troisième approche : convolution 3D sur des images de flux optique}
+\label{sec:orgfac16bb}
+
 \section{Collecte des données \& entraînement}
-\label{sec:org2542446}
+\label{sec:org1e90fbb}
 \subsection{Datasets}
-\label{sec:org531d67a}
+\label{sec:org86fbc40}
 L'objectif de la collecte de données est d'obtenir les ensembles de données suivants :\\
 \begin{itemize}
 \item Dataset non logo\\
 \item Dataset logo\\
 \end{itemize}
+Chaque élément du dataset contient :\\
+\begin{itemize}
+\item une séquence de 20 images représentant la séquence (pour le classifieur d'image à convolution 3D)\\
+\item une séquence 38 images représentant une seule image (avec 38 canaux) de flux optique par la méthode cite:DBLP:journals/corr/SimonyanZ14 (pour le classifieur de flux optique à convolution 2D)\\
+\item une image représentant la somme des flux optiques (pour le classifieur de flux optique à convolution 2D)\\
+\item une séquence 19 images représentant (pour le classifieur de flux optique à convolution 3D)\\
+\end{itemize}
 
 \subsection{Collecte des données}
-\label{sec:org6fa13af}
+\label{sec:org1bd24b6}
 L'approche par matching de contours convient tout à fait pour former notre ensemble de données de logo.\\
 
 En effet, elle est :\\
@@ -672,8 +710,33 @@ En effet, elle est :\\
 \item précise : il est possible de modifier les paramètres pour que l'algorithme ne renvoie presque pas de faux-positifs (>1\%)\\
 \end{itemize}
 
+\subsection{Obtention des images de flux optiques}
+\label{sec:org9b421df}
+Pour obtenir les images de flux optiques, nous allons utiliser notre algorithme de détection de logo par matching de contours afin d'obtenir les séquences d'images comprises entre deux plans.\\
+Pour chacune de  ces séquences, nous allons calculer son flux optique. Le problème est qu'il n'est possible de ne calculer le flux optique qu'entre deux frames; or, une séquence s'étale sur plus que deux frames (dans notre cas, 20 frames).\\
+Afin d'obtenir une seule image pour le flux optique de la séquence, il existe plusieurs méthodes.\\
+\subsubsection{Image de flux optique : 2L canaux}
+\label{sec:org0cbcc0e}
+Dans cite:DBLP:journals/corr/SimonyanZ14, les auteurs proposent de représenter le flux optique d'une séquence d'images comme une image avec 2L canaux, où L est le nombre d'images dans la séquence. Les canaux pairs représentent le déplacement vertical des objets, et les canaux impairs le déplacement horizontal. Ainsi, chaque image qui servira d'entrée au classifieur sera de dimension \(\R^{w*h*2L}\) où w et h sont la longueur et la largeur en pixels et L le nombre d'images dans la séquence. Ces images n'auront pas un contenu visuel identifiable pour l'humain, mais seront comprises par un réseau à convolution. Concrètement, cela revient à stocker deux images de flux pour chaque image de la séquence; la première image est l'information horizontal de déplacement, la seconde l'information vertical de déplacement.\\
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=10cm]{optical_flow_two_stream.png}
+\caption{Obtention du flux optique pour une séquence, avec séparation du flux vertical (droite) et horizontal (gauche) label:flux-trajectory}
+\end{figure}
+
+\subsubsection{Image de flux optique : somme des fluxs}
+\label{sec:orga5216fa}
+Une autre méthode pour obtenir une image de flux optique à partir d'une séquence de flux optique est de calculer la somme de tous les flux optiques.\\
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=10cm]{optical_flow_sum.png}
+\caption{Obtention du flux optique pour une séquence par somme de tous les fluxs de la séquence}
+\end{figure}
+
+
+
 \subsection{Architecture du scrapper}
-\label{sec:org96dd45d}
+\label{sec:org3a74458}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=15cm]{arch_scrap.png}
@@ -681,41 +744,41 @@ En effet, elle est :\\
 \end{figure}
 Nous voulons une architecture de scrapping qui soit distribuée.\\
 En effet, le traitement d'une vidéo prend en moyenne cinq minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.\\
-Pour cela, nous allons créer un cluster Kubernetes qui répartira la charge de travail sur plusieurs machines.\\
-Typiquement, nous utiliserons une solution type GCP (Google Cloud Platform) ou AWS (Amazon Web Services) pour l'infrastructure.\\
+Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui upload les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).\\
+L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.\\
 
 \newpage
 \section{Comparaison des approches}
-\label{sec:org469c112}
+\label{sec:orge1617b4}
 Dans cette partie, nous allons évaluer chaque approche sur le même ensemble d'évalutation.\\
 Puis nous allons comparer les résultats obtenus et enfin nous allons conclure sur l'efficacité des différences approches.\\
 
 \subsection{Procédure d'évaluation}
-\label{sec:org9b694a8}
+\label{sec:org49cb2dc}
 L'ensemble d'évaluation est le suivant : une vidéo de ligue 1 de 150k frames, une vidéo de ligue 1 de 80k frames, une vidéo de liga et enfin une vidéo de premier league.\\
 Dans toutes les expérimentations, la vidéo est découpée en plans (plan).\\
 Soit S l'ensemble des plans.\\
 
 \subsection{Résultats pour ORB}
-\label{sec:orgdb63749}
+\label{sec:orgdca91cc}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=15cm]{res_orb.png}
-\caption{Résultats obtenus pour le clustering avec les caractéristiques extraites par ORB \label{orb-res}}
+\caption{Résultats obtenus pour le clustering avec les caractéristiques extraites par ORB label:orb-res}
 \end{figure}
 
-Les résultats (\ref{orb-res}) sont mauvais sur toutes les vidéos.\\
+Les résultats (ref:orb-res) sont mauvais sur toutes les vidéos.\\
 Le gros inconvénient de ces méthodes est le caractère arbitraire de la sélection du groupe de logo après le clustering.\\
-En effet, nous faisons l'hypothése qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.\\
-De plus, l'algorithme d'extraction de caractèristiques ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.\\
+En effet, nous faisons l'hypothèse qu'il y aura toujours plus de non-logo que de logo, ce qui n'est pas toujours vrai.\\
+De plus, l'algorithme d'extraction de caractéristiques ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.\\
 
 Néanmoins, il est intéressant de remarquer que les résultats avec la fenêtre de frame sont toujours meilleurs que les résultats avec un seul frame.\\
 \subsection{Résultats pour la détection par luminance}
-\label{sec:orgeb2cd95}
+\label{sec:org976d628}
 \begin{center}
 \includegraphics[width=15cm]{robust_res.JPG}
 \end{center}
-Après avoir implémenté la méthode de détection par luminance (\cite{xu11_robus_replay_detec_algor_soccer_video}), nous avons constaté que celle-ci n'est pas efficace et ne fonctionne pas sur notre ensemble d'évaluation.\\
+Après avoir implémenté la méthode de détection par luminance (cite:xu11\(_{\text{robus}}\)\(_{\text{replay}}\)\(_{\text{detec}}\)\(_{\text{algor}}\)\(_{\text{soccer}}\)\(_{\text{video}}\)), nous avons constaté que celle-ci n'est pas efficace et ne fonctionne pas sur notre ensemble d'évaluation.\\
 Cette approche est trop dépendante de la luminance et elle ne parvient pas à détecter les logos peu lumineux.\\
 De plus, les bases mathématiques (notamment la manière de choisir le cluster et la mesure de distance) sont quelque peu douteuses.\\
 Enfin, celle-ci dépend trop du paramètre "seuil de luminance" affectant les logos détectés.\\
@@ -727,14 +790,14 @@ Les logos de Premier League quant à eux ne sont pas tous détectés avec un seu
 
 Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en place un système de détection de replays robuste et efficace.\\
 
-\subsubsection{Résultats pour l'approche par matching de contours}
-\label{sec:orga0b201c}
+\subsection{Résultats pour l'approche par matching de contours}
+\label{sec:org7869cd6}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=17cm]{res_match_contour.png}
-\caption{Résultats obtenus \label{res-match-contour}}
+\caption{Résultats obtenus label:res-match-contour}
 \end{figure}
-Les résultats obtenus sont présentés en \ref{res-match-contour}.\\
+Les résultats obtenus sont présentés en ref:res-match-contour.\\
 
 Après avoir fait plusieurs essais avec des paramètres différents à chaque fois, nous ne sommes pas parvenus à trouver une combinaison telle qu'il n'y ait aucun faux positif et aucun faux négatif.\\
 Néanmoins, si le seuil d'acceptance des logos est assez élevé, l'algorithme ne retourne aucun faux positif.\\
@@ -764,7 +827,7 @@ Cette méthode servira aussi de \emph{baseline} pour évaluer l'efficacité des 
 
 \newpage
 \section{Appendice}
-\label{sec:orgba58bcc}
+\label{sec:org9b93928}
 \begin{itemize}
 \item Clustering : procédé permettant de regrouper des éléments\\
 \item Histogramme : représentation d'une image en fonction de ses canaux de couleurs (rouge, vert, bleu)\\
@@ -779,32 +842,34 @@ Cette méthode servira aussi de \emph{baseline} pour évaluer l'efficacité des 
 
 \newpage
 \section{Table des figures}
-\label{sec:orgfae6e70}
-\ref{calc-dist} Xu, W., \& Yi, Y., A robust replay detection algorithm for soccer video, IEEE Signal Processing Letters, 18(9), 509–512 (2011).  \url{http://dx.doi.org/10.1109/lsp.2011.2161287}. Equation (4)\\
+\label{sec:org69dadf9}
+ref:calc-dist Xu, W., \& Yi, Y., A robust replay detection algorithm for soccer video, IEEE Signal Processing Letters, 18(9), 509–512 (2011).  \url{http://dx.doi.org/10.1109/lsp.2011.2161287}. Equation (4)\\
 
-\ref{mean-shift-res} Duan, L., Xu, M., Tian, Q., \& Xu, C., Mean shift based video segment representation and applications to replay detection, 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing, (),  ().  \url{http://dx.doi.org/10.1109/icassp.2004.1327209}. Table 1\\
+ref:mean-shift-res Duan, L., Xu, M., Tian, Q., \& Xu, C., Mean shift based video segment representation and applications to replay detection, 2004 IEEE International Conference on Acoustics, Speech, and Signal Processing, (),  ().  \url{http://dx.doi.org/10.1109/icassp.2004.1327209}. Table 1\\
 
-\ref{sparse-vs-dense} Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. \cite{Goodfellow-et-al-2016} Figure 9.2\\
+ref:sparse-vs-dense Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. cite:Goodfellow-et-al-2016 Figure 9.2\\
 
-\ref{optical-flow} Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2\\
+ref:optical-flow Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2\\
 
-\ref{c3d-res} Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Table 3\\
+ref:flux-trajectory Wang, H., Klaser, A., Schmid, C., \& Liu, C., Action recognition by dense trajectories, In , CVPR 2011 (pp. ) (2011). : . Equation 2\\
 
-\ref{opt-flow} Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2\\
+ref:c3d-res Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Table 3\\
 
-\ref{two-stream-res} Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Table 4\\
+ref:opt-flow Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2\\
 
-\ref{arch-c3d} Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Figure 3\\
+ref:two-stream-res Simonyan, K., \& Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Table 4\\
 
-\ref{arch-lstm} Ng, J. Y., Hausknecht, M., Vijayanarasimhan, S., Vinyals, O., Monga, R., \& Toderici, G., Beyond short snippets: deep networks for video classification, 2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), (),  (2015).  \url{http://dx.doi.org/10.1109/cvpr.2015.7299101}. Figure 4\\
+ref:arch-c3d Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Figure 3\\
 
-\ref{convolution} Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. Chapitre 9. Figure 9.1\\
+ref:arch-lstm Ng, J. Y., Hausknecht, M., Vijayanarasimhan, S., Vinyals, O., Monga, R., \& Toderici, G., Beyond short snippets: deep networks for video classification, 2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), (),  (2015).  \url{http://dx.doi.org/10.1109/cvpr.2015.7299101}. Figure 4\\
 
-\ref{pooling} Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. Chapitre 9. Figure 9.9\\
+ref:convolution Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. Chapitre 9. Figure 9.1\\
 
-\ref{c3d-idea} Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Figure 1\\
+ref:pooling Goodfellow, I., Bengio, Y., \& Courville, A., Deep Learning (2016), : MIT Press. Chapitre 9. Figure 9.9\\
 
-\ref{cnn_lstm} Ng, J. Y., Hausknecht, M., Vijayanarasimhan, S., Vinyals, O., Monga, R., \& Toderici, G., Beyond short snippets: deep networks for video classification, 2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), (),  (2015).  \url{http://dx.doi.org/10.1109/cvpr.2015.7299101}. Table 7\\
-\bibliographystyle{unsrt}
-\bibliography{summary}
+ref:c3d-idea Tran, D., Bourdev, L., Fergus, R., Torresani, L., \& Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  \url{http://dx.doi.org/10.1109/iccv.2015.510}. Figure 1\\
+
+ref:cnn\(_{\text{lstm}}\) Ng, J. Y., Hausknecht, M., Vijayanarasimhan, S., Vinyals, O., Monga, R., \& Toderici, G., Beyond short snippets: deep networks for video classification, 2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR), (),  (2015).  \url{http://dx.doi.org/10.1109/cvpr.2015.7299101}. Table 7\\
+bibliographystyle:unsrt\\
+bibliography:summary.bib\\
 \end{document}

@@ -289,7 +289,7 @@ class ReplayDetector(capture: VideoCapture,
   def saveShots(
     shotIdxs: Vector[Int],
     shotFolder: String = mosaicParentFolderName,
-    frameFolder: String=frameFolderName
+    frameFolder: String=logoFolderName
   ): Unit = {
     var previousShotIdx = 0
     val backgroundSize = 1

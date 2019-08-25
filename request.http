@@ -1,0 +1,7 @@
+POST http://0.0.0.0:8022/replay-detector
+Content-Type: application/json
+{
+        "youtubeUrl": "https://www.youtube.com/watch?v=h1OJFu9dmJA",
+        "frameToAnalyse": 3000,
+        "startFrame": 24000
+}

@@ -19,6 +19,8 @@ import akka.Done
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
+
+import scala.concurrent.ExecutionContext
 // for JSON serialization/deserialization following dependency is required:
 // "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -38,10 +40,15 @@ import scala.util.Try
   */
 case class Logo(index: Int, matches: Int, score: Int, tag:Option[String] = None)
 
-case class VideoInfo(startFrame: Int, frameToAnalyse: Int, videoWidth: Int, videoHeight: Int)
+case class VideoInfo(startFrame: Int,
+                     frameToAnalyse: Int,
+                     videoWidth: Int,
+                     videoHeight: Int,
+                     runId: String)
 
 trait Configuration {
-  val frameFolderName         = "frame/"
+  val logoFolderName         = "frame/"
+  val nonLogoFolderName         = "non_logo/"
   val knownLogoFolderName     = "known_logo/"
   val mosaicParentFolderName  = "shot/"
   val shiftedMosaicFolderName = mosaicParentFolderName + "A/"
@@ -66,15 +73,6 @@ trait Configuration {
     */
   def mosaicSize = 20 // the size of the mosaic
 
-  // the date when we parsed the video
-  // TODO : make the date clearer ie use DateFormatter or something like that
-  def runId:String = new Timestamp(System.currentTimeMillis())
-    .toString
-    .replaceAll("\\s", "")
-    .replaceAll("""([\p{Punct}&&[^.$]]|\b\p{IsLetter}{1,2}\b)\s*""", "_")
-    .dropRight(4)
-    .replaceAll("\\s", "")
-    .trim
   // def findShot: Vector[Int]
 }
 
@@ -105,16 +103,21 @@ object WebServer extends App {
           withRequestTimeout(30.minutes) {
             entity(as[YoutubeRequest]) { youtubeRequest =>
               val saved: Future[Done] =
-                Future.successful(
-                  YoutubeLogoExtractor(
-                    youtubeRequest.youtubeUrl,
-                    youtubeRequest.knownLogoTag,
-                    videoInfo = VideoInfo(
-                      startFrame = youtubeRequest.startFrame.getOrElse(0),
-                      frameToAnalyse = youtubeRequest.frameToAnalyse.getOrElse(Int.MaxValue),
-                      videoWidth = youtubeRequest.videoWidth.getOrElse(100),
-                      videoHeight = youtubeRequest.videoHeight.getOrElse(100),
-                    )
+                YoutubeLogoExtractor(
+                  youtubeRequest.youtubeUrl,
+                  youtubeRequest.knownLogoTag,
+                  videoInfo = VideoInfo(
+                    startFrame = youtubeRequest.startFrame.getOrElse(0),
+                    frameToAnalyse = youtubeRequest.frameToAnalyse.getOrElse(Int.MaxValue),
+                    videoWidth = youtubeRequest.videoWidth.getOrElse(100),
+                    videoHeight = youtubeRequest.videoHeight.getOrElse(100),
+                    runId = new Timestamp(System.currentTimeMillis())
+                      .toString
+                      .replaceAll("\\s", "")
+                      .replaceAll("""([\p{Punct}&&[^.$]]|\b\p{IsLetter}{1,2}\b)\s*""", "_")
+                      .dropRight(4)
+                      .replaceAll("\\s", "")
+                      .trim
                   )
                 ).map { _ => Done }
               onComplete(saved) { done =>
@@ -127,37 +130,49 @@ object WebServer extends App {
     )
 
 
-  val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+  val bindingFuture = Http().bindAndHandle(route, "0.0.0.0", 8080)
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-  StdIn.readLine() // let it run until user presses return
-  bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => system.terminate()) // and shutdown when done
-
 }
 
 object YoutubeLogoExtractor extends Configuration {
 
-  def apply(youtubeUrl: String, knownLogoTag: Option[String], videoInfo: VideoInfo): Unit = {
-    downloadFromYoutube(youtubeUrl)
-    replayDetection("video.mp4", knownLogoTag, videoInfo)
-    uploadToGCP("frame/unk")
+  def apply(youtubeUrl: String,
+            knownLogoTag: Option[String],
+            videoInfo: VideoInfo)
+           (implicit ec:ExecutionContext)
+  : Future[Unit] = {
+    Future {
+      println(s"Starting to parse the video $youtubeUrl.\n$videoInfo")
+      downloadFromYoutube(youtubeUrl, videoInfo.runId)
+      replayDetection(videoInfo.runId + ".mp4", knownLogoTag, videoInfo)
+    }.map(_ => uploadToGCP(logoFolderName, "gs://logo_detection_shots"))
   }
 
-  def downloadFromYoutube(youtubeUrl: String): String = {
-    val process = Runtime.getRuntime.exec("youtube-dl -f 160 " + youtubeUrl + " -o video.mp4")
+  def downloadFromYoutube(youtubeUrl: String, runId: String): String = {
+    println(s"Downloading ${youtubeUrl} from youtube")
+    val process = Runtime.getRuntime.exec(s"youtube-dl -f 160 $youtubeUrl -o $runId.mp4")
     process.waitFor()
+    val error = scala.io.Source.fromInputStream(process.getErrorStream).mkString
+    if (error != "") println("ERROR : " + error)
+    else println("No error while downloading from youtube")
     youtubeUrl
   }
 
-  def uploadToGCP(folderPath: String): Unit = {
-    val process = Runtime.getRuntime.exec("gsutil cp -r " + folderPath + " gs://logo_detection_shots")
+  def uploadToGCP(folderPath: String,
+                  bucket: String)
+                 (implicit ec: ExecutionContext)
+  : Future[Unit] = Future {
+    println(s"Uploading $folderPath to GCP")
+    val process = Runtime.getRuntime.exec("gsutil -m cp -r " + folderPath + " " + bucket)
     process.waitFor()
+    val error = scala.io.Source.fromInputStream(process.getErrorStream).mkString
+    if (error != "") println("ERROR : " + error)
+    else println("No error while uploading to GCP")
   }
 
   // ensure every folder exists, also clean the shot folder
   def setup(): Unit = {
-    val frameFolder = new File(frameFolderName)
+    val frameFolder = new File(logoFolderName)
     val knownLogoFolder = new File(knownLogoFolderName)
     val shotFolder = new File(mosaicParentFolderName)
     val shiftMosaicFolder = new File(shiftedMosaicFolderName)
@@ -213,15 +228,21 @@ object YoutubeLogoExtractor extends Configuration {
 
     val replays = replayDetector.findReplay(logos)
 
-    replayDetector.createPlayList(foundShots, filename, logos = logos)
+    //replayDetector.createPlayList(foundShots, filename, logos = logos)
 
     println("Saving " + logos.map(_.index).distinct.size + " logo frames")
 
     logos
       .groupBy(_.tag)
       .foreach{ case (optTag, logosForTag) =>
-        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, frameFolderName + optTag.getOrElse("unk") + "/", Some(runId + "/"), mosaicSize)
+        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, logoFolderName + optTag.getOrElse("unk") + "/", Some(videoInfo.runId + "/"), mosaicSize)
       }
+
+    // save non logo shots
+    val nonLogos = scala.util.Random.shuffle(
+      shotFrames.toSet -- (logos.map(_.index) ++ logos.map(_.matches)).toSet
+    ).take(logos.length)
+    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, logoFolderName + "not_logo", Some(videoInfo.runId + "/"), mosaicSize)
 
     println("Time total : " + (System.currentTimeMillis() - t))
 
