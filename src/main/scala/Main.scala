@@ -146,7 +146,7 @@ object YoutubeLogoExtractor extends Configuration {
       println(s"Starting to parse the video $youtubeUrl.\n$videoInfo")
       downloadFromYoutube(youtubeUrl, videoInfo.runId)
       replayDetection(videoInfo.runId + ".mp4", knownLogoTag, videoInfo)
-    }//.flatMap(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
+    }.flatMap(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
       .map{_ => println(s"Completed analysis for video $youtubeUrl")}
       .recover {
         case NonFatal(ex) =>
@@ -261,7 +261,7 @@ object YoutubeLogoExtractor extends Configuration {
     logos
       .groupBy(_.tag)
       .foreach{ case (optTag, logosForTag) =>
-        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, logoFolderName + optTag.getOrElse("unk") + "/", videoInfo.runId, mosaicSize)
+        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, videoInfo.runId + "/" + logoFolderName + optTag.getOrElse("unk") + "/", videoInfo.runId, mosaicSize)
       }
 
     // save non logo shots
@@ -269,7 +269,7 @@ object YoutubeLogoExtractor extends Configuration {
     val nonLogos = scala.util.Random
       .shuffle(shotFrames.toSet -- distinctLogos)
       .take(distinctLogos.size)
-    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, logoFolderName + "not_logo", videoInfo.runId, mosaicSize)
+    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, videoInfo.runId + "/" + logoFolderName + "not_logo", videoInfo.runId, mosaicSize)
 
     println("Time total : " + (System.currentTimeMillis() - t))
 
