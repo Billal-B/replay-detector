@@ -1,7 +1,6 @@
-POST http://localhost:8080/replay-detector
+POST http://localhost:22022/replay-detector
 Content-Type: application/json
 {
-        "youtubeUrl": "https://www.youtube.com/watch?v=h1OJFu9dmJA",
-        "frameToAnalyse": 3000,
-        "startFrame": 24000
+        "youtubeUrl": "https://www.youtube.com/watch?v=ONxGtrgDXY0",
+        "startFrame": 10000
 }

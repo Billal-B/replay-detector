@@ -78,18 +78,18 @@ La détection de replays est un domaine de recherche à part entière et les art
 ** A Robust Replay Detection
 Cette approche cite:xu11_robus_replay_detec_algor_soccer_video détecte les replays en trouvant les logos dans les vidéo.
 Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est présent pendant 0.8 secondes soit 18 frames pour une vidéo de 24 FPS.
-Tous les frames qui ont obtenu un score supérieur à un certain seuil sont considérés comme des candidats pour être le /logo template/.
+Toutes les frames qui ont obtenues un score supérieur à un certain seuil sont considérés comme des candidats pour être le /logo template/.
 Le /logo template/ est le logo qui représente le mieux les logos dans la vidéo et c'est celui-ci qui va servir de référence pour trouver tous les logos.
 
 *** Calcul du score de la luminance et filtrage des frames  
-L'idée est de parcourir toute la vidéo et de calculer pour chaque frame la différence de luminance qu'il y a entre ce frame et les 17 frames précédents.
+L'idée est de parcourir toute la vidéo et de calculer pour chaque frame la différence de luminance qu'il y a entre cette frame et les 17 frames précédentes.
 Nous obtenons un score L_i pour chaque frame i dans la vidéo.
-Tous les frames dont le score est inférieur à un certain seuil sont écartés, les autres vont servir à trouver le logo template.
+Toutes les frames dont le score est inférieur à un certain seuil sont écartés, les autres vont servir à trouver le logo template.
 
-*** Recherche du logo template parmi les frames filtrés
+*** Recherche du logo template parmi les frames filtrées
 Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.
-Pour déterminer le logo template parmi les frames filtrés, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
-Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélectionner le frame m minimisant la distance avec tous les autres frames du cluster.
+Pour déterminer le logo template parmi les frames filtrées, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
+Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélectionner la frame m minimisant la distance avec toutes les autres frames du cluster.
 
 #+CAPTION: Formule de la distance entre deux frames dans le cluster label:calc-dist
 #+ATTR_LATEX: :width 10cm
@@ -487,6 +487,8 @@ Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Al
 
 L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
 
+*** Détection de contours
+Avec des algorithmes comme le filtre de Canny 
 
 *** Mosaique de plan
 #+CAPTION: ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) label:mosaic
@@ -595,6 +597,13 @@ Nous voulons une architecture de scrapping qui soit distribuée.
 En effet, le traitement d'une vidéo prend en moyenne cinq minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
 Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui upload les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
+
+**** Kubernetes
+#+CAPTION: Cluster Kubernetes sur GCP
+#+ATTR_LATEX: :width 10cm
+[[file:kubernetes_pods.png]]
+Un cluster Kubernetes avec un load balancer va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
+Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
 ** Entraînement du modèle
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est TensorFlow.
 

@@ -298,6 +298,7 @@ class ReplayDetector(capture: VideoCapture,
 
     for {(shotIdx, i) <- shotIdxs.zipWithIndex} {
 
+      /*
       val nextBackgroundFrames = {
         // We remove from the current frame the frames in the middle of the current shot and of the next shot
         // We need to make sure that we don't take frames outside of the next shot (hence the min)
@@ -308,6 +309,7 @@ class ReplayDetector(capture: VideoCapture,
         //else makeBackgroundFromIndex(nextFrameBackgroundIdx, backgroundSize)
         nextBackgroundFrames
       }
+      */
 
       // We remove from the current frame the frames in the middle of the current shot and of the previous shot
       // We need to make sure that we don't take frames outside of the previous shot (hence the max)
@@ -317,7 +319,7 @@ class ReplayDetector(capture: VideoCapture,
       val previousBackgroundFrames = makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
       //val s = if (previousBackgroundFrameIndex + fps > shotIdx) Vector.empty[Mat] else makeBackgroundFromIndex(previousBackgroundFrameIndex, backgroundSize)
 
-      writeShotMosaic(runId, shotIdx, nextBackgroundFrames ++ previousBackgroundFrames, shotFolder)
+      writeShotMosaic(runId, shotIdx, /*nextBackgroundFrames ++ */previousBackgroundFrames, shotFolder)
       previousShotIdx = shotIdx
 
       //nextBackgroundFrames.foreach(_.release())
@@ -343,7 +345,6 @@ class ReplayDetector(capture: VideoCapture,
       resize(frame, resized, new Size(videoWidth, videoHeight))
       // we crop so we don't have static info such as a scoreboard on the image (because they're usually on the edge of the screen)
       val cropped: Mat = cropImage(resized)
-      val blurred = new Mat()
       // detects the contour in the frame
       val contoursWithBackground = makeCountoursFrame(cropped, minLogoSegmentLength)
       // we remove the background to remove the still pixels in the frame (a logo is supposed to move, so still

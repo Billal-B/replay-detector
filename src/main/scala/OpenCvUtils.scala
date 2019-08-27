@@ -31,24 +31,35 @@ object OpenCvUtils {
     contours
   }
 
-  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String, tag: Option[String] = None, saveSize: Int = 0): Unit = {
+  def saveFrames(capture: VideoCapture, frameIdxs: Seq[Int], folder:String, tag: String = "", saveSize: Int = 0): Unit = {
     // creating the folder
     if (! new File(folder).exists()) {
       new File(folder).mkdir()
     }
     val logoFolder = new File(folder)
-    // creating the subfolder
-    new File(logoFolder.getCanonicalPath + "/" + tag.getOrElse("no_tag")).mkdir()
-    val logoSubfolder = new File(logoFolder.getCanonicalPath + "/" + tag.getOrElse("no_tag"))
+    // creating the subfolders
+    val conv3dfolder = new File(logoFolder.getCanonicalPath + "/conv3d/")
+    conv3dfolder.mkdir()
+    val flow3dfolder = new File(logoFolder.getCanonicalPath + "/flow3d/")
+    flow3dfolder.mkdir()
+    val flow2dfolder = new File(logoFolder.getCanonicalPath + "/flow2d/")
+    flow2dfolder.mkdir()
+    val flowSumfolder = new File(logoFolder.getCanonicalPath + "/flowSum/")
+    flowSumfolder.mkdir()
 
     frameIdxs.foreach{idx =>
-      new File(logoSubfolder.getCanonicalPath + "/" + idx).mkdir()
-      val indexDir = new File(logoSubfolder.getCanonicalPath + "/" + + idx)
+      val idxConv3dDir = new File(conv3dfolder.getCanonicalPath + "/" + tag + "_" + idx)
+      idxConv3dDir.mkdir()
+      val idxFlow3dDir = new File(flow3dfolder.getCanonicalPath + "/" + tag + "_" + idx)
+      idxFlow3dDir.mkdir()
+      val idxFlow2dDir = new File(flow2dfolder.getCanonicalPath + "/" + tag + "_" + idx)
+      idxFlow2dDir.mkdir()
 
-      var prevFrame = new Mat()
+      val prevFrame = new Mat()
       capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + 0)
       capture.read(prevFrame)
-      imwrite(indexDir.getCanonicalPath + "/" + "0" +".png", prevFrame)
+      imwrite(idxConv3dDir.getCanonicalPath + "/" + "0" +".png", prevFrame)
+      prevFrame.release()
 
       val framesToSave = (1 to saveSize).map {i =>
         val frame = new Mat()
@@ -57,19 +68,31 @@ object OpenCvUtils {
         frame
       }.toVector
 
-      if (framesToSave.length > 2) calcOpticalFlow(framesToSave, indexDir.getCanonicalPath + "/")
+      if (framesToSave.length > 2) calcOpticalFlow(framesToSave, idxFlow3dDir.getCanonicalPath, idxFlow2dDir.getCanonicalPath, flowSumfolder.getCanonicalPath, tag + "_" + idx)
 
       framesToSave.zipWithIndex.foreach{case (frame, i) =>
-        imwrite(indexDir.getCanonicalPath + "/" + i +".png", frame)
+        imwrite(idxConv3dDir.getCanonicalPath + "/" + i +".png", frame)
       }
 
       framesToSave.foreach(_.release())
     }
   }
 
-  private def calcOpticalFlow(frames: Vector[Mat], directory: String): Unit = {
+  /**
+    * Calc the 3d, 2d and sum optical flows for the frames
+    * @param frames
+    * @param flow3dDir
+    * @param flow2dDir
+    * @param flowSumDir
+    */
+  private def calcOpticalFlow(
+    frames: Vector[Mat],
+    flow3dDir: String,
+    flow2dDir: String,
+    flowSumDir: String,
+    tag: String
+  ): Unit = {
     val matInit = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2, new Scalar(0,0,0))
-    val accumulatedFlow = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2)
     val (trajectoryFlow, accDist) =
       0.until(frames.length - 1).foldLeft(matInit, 0d) { case ((prevFlow, prevAccDist), idx) =>
         val prevFrame = frames(idx)
@@ -113,9 +136,9 @@ object OpenCvUtils {
           line(cflow, new Point(x, y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
             new Scalar(255d, 255d, 255d))
         }
-        imwrite(directory + "flow2D_" + (idx * 2) + ".png", cflowHorizontal)
-        imwrite(directory + "flow2D_" + (idx * 2 + 1) + ".png", cflowVertical)
-        imwrite(directory + "flow3D_" + idx + ".png", cflow)
+        imwrite(flow2dDir + "/" + (idx * 2) + ".png", cflowHorizontal)
+        imwrite(flow2dDir + "/" + (idx * 2 + 1) + ".png", cflowVertical)
+        imwrite(flow3dDir + "/" + idx + ".png", cflow)
 
         cflowHorizontal.release()
         cflowVertical.release()
@@ -144,9 +167,11 @@ object OpenCvUtils {
       line(cflow, new Point(x, y), new Point(Math.round(x.toDouble + point(0)), Math.round(y.toDouble+point(1))),
         new Scalar(255d, 255d, 255d))
     }
-    imwrite(directory + "flow.png", cflow)
+    imwrite(flowSumDir + "/" + tag + ".png", cflow)
 
+    normalizedFlow.release()
     cflow.release()
+    matInit.release()
   }
 
   /*
