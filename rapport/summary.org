@@ -559,10 +559,10 @@ L'objectif de la collecte de données est d'obtenir les ensembles de données su
 - Dataset non logo
 - Dataset logo
 Chaque élément du dataset contient :
-- une séquence de 20 images représentant la séquence (pour le classifieur d'image à convolution 3D)
-- une séquence 38 images représentant une seule image (avec 38 canaux) de flux optique par la méthode cite:DBLP:journals/corr/SimonyanZ14 (pour le classifieur de flux optique à convolution 2D)
-- une image représentant la somme des flux optiques (pour le classifieur de flux optique à convolution 2D)
-- une séquence 19 images représentant (pour le classifieur de flux optique à convolution 3D)
+- une séquence de 20 images représentant la séquence (pour un classifieur d'image à convolution 3D)
+- une séquence 38 images représentant une seule image (avec 38 canaux) de flux optique par la méthode cite:DBLP:journals/corr/SimonyanZ14 (pour un classifieur de flux optique à convolution 2D)
+- une image représentant la somme des flux optiques (pour un classifieur de flux optique à convolution 2D)
+- une séquence 19 images représentant (pour un classifieur de flux optique à convolution 3D)
 
 ** Collecte des données
 L'approche par matching de contours convient tout à fait pour former notre ensemble de données de logo.
@@ -604,8 +604,13 @@ L'image est stockée sur le Container Registry de GCP, et va être lancée dans 
 [[file:kubernetes_pods.png]]
 Un cluster Kubernetes avec un load balancer va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
 Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
-** Entraînement du modèle
+** Données collectées
+Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
+En tout, plus de 400000 images sont générées (8 go sur disque).
+** Entraînement et architectures des modèles
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est TensorFlow.
+Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
+Pour les réseaux à convolution 2D (classifieur d'images représentant la somme du flux optique dans la vidéo et classifieur d'images représentant le flux optique dans une séquence par une image avec 38 canaux), nous allors reprendre l'architecture proposée par cite:DBLP:journals/corr/SimonyanZ14.
 
 #+LATEX: \newpage
 * Comparaison des approches
