@@ -9,15 +9,6 @@
 
 #+OPTIONS: \n:t
 #+LATEX: \newpage
-* TODO vérif un frame vs une frame
-* TODO faire la distinction plan / transition de plan
-parfois je parle de plan alors que je ne regarde que la transition entre les plan (par ex, avec ORB)
-* TODO plus détaillé la partie détection de contours
-rajouter des images :
-1) le shot (avec les images couleurs)
-2) shot => contours
-3) contours => mosaic
-4) match mosaic
 * Sportagraph
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R&D).
 Son produit est un DAM (Digital Asset Manager) spéecialisé dans les événements sportifs.
@@ -104,12 +95,7 @@ Tous les frames qui ont une distance inférieure à un certain threshold sont co
 *** Recherche des replays
 Une fois que les logos sont détectés, nous pouvons trouver les replays en cherchant les paires de logos éloignés de moins de 80 seconde (durée maximum d'un replay).
 
-*** Résultats des auteurs
-* TODO résultat auteurs pour robust replay 
-
-
-
-  
+*** Résultats des auteurs  
 ** Mean Shift Based video Segment Representation And Applications To Replay Detection
 Dans cet article cite:Ling_Yu_Duan, les auteurs présentent une méthode permettant de détecter les replays.
 L'idée est d'apprendre une base de représentation compressée de logos avec une méthode comme le spectral hashing (cite:NIPS2008_3383), puis de se servir de cette base de données pour trouver les logo au début à la fin de replays.
@@ -371,7 +357,7 @@ Néanmoins, une variante de celle-ci où le LSTM reçoit en entrée une séquenc
 
 #+LATEX: \newpage
 * Les approches proposées
-L'objectif de notre recherche est de détecter les replays dans les vidéos de sport
+L'objectif de notre recherche est de détecter les replays dans les vidéos de sport.
 
 Pour détecter les replays, nous faisons les hypothèses suivantes :
 - un replay a un logo de début (I)
@@ -384,9 +370,10 @@ Nous proposons plusieurs approches permettant de détecter les logos de replay d
 En premier lieu, nous proposons deux approches n'utilisant que des algorithmes d'analyse d'images classiques (flouttage, filtre de Canny, ORB, ...) :
 - la première se sert de l'algorithme ORB (cite:Rublee_2011) et de l'algorithme K-Means
 - la seconde utilise la détection de contours pour trouver les images avec des contours similaires dans la vidéo
-Ensuite, nous présentons deux approches par apprentissage profond :
+Ensuite, nous présentons trois approches par apprentissage profond :
 - la première utilise un réseau à convolution 3D sur une séquence d'images (similaire à cite:Tran_2015)
 - la seconde utilise un réseau à convolution 2D sur des images représentant le flux optique des objets dans la vidéo
+- la troisème utilise un réseau à convolution 3D sur des séquences d'images représentant le flux optique des objets dans la vidéo
 
 ** Détection des plans
 Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logo pouvant se trouver au début et à la fin des replays.
@@ -422,7 +409,18 @@ Après avoir segmenter la vidéo en plan, nous obtenons un N’ au alentours de 
 Nous pouvons donc nous permettre d’utiliser des algorithmes plus complexes que sans la segmentation en plan.
 De plus, la segmentation en plan réduit le champs de recherche des frames logo, et donc le nombre de faux positifs.
 
-** Analyse d'image - Première approche : ORB
+** Flux optique
+[[file:optical_flow_2.png]]
+Le flux optique décrit le déplacement des objets entre deux frames consécutifs, ce mouvement peut être causé par un déplacement de la caméra ou de l'objet lui-même.
+Le flux optique est une matrice X * Y * D, où X et Y sont l'axe des absisses et des ordonnées (resp.) dans l'image, et D une droite décrivant le déplacement du pixel à la position (x,y) entre le frame t et le frame t + 1.
+
+De la même manière que pour cite:wang11_action, nous allons traquer le déplacement des objets grâce au flux optique.
+Il existe deux types d'algorithme de calcul du flux optique :
+- sparse/creux : seulement les déplacements de certains points d'intéret vont être traqués (méthode de Lucas-Kanade)
+- dense : le déplacement de tous les points dans l'image vont être traqués (algorithme de Gunner Farneback)
+Le calcul du flux optique dense est plus couteux mais à l'avantage de ne pas nécessiter de déterminer les points d'intéret dans l'image avant de calculer le flux optique.
+
+** ORB et K-means 
 Dans cette approche, nous cherchons à reconnaître les logos dans les vidéo.
 Pour ce faire, nous optons pour une approche de clustering. 
 L'idée est de séparer la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
@@ -479,7 +477,7 @@ L'algorithme est le suivant :
   - le groupe le plus petit est le groupe des logo
 #+END_SRC
 
-** Analyse d'image - Seconde approche : matching de contours
+** Matching de contours
 Dans cette approche, nous allons chercher les frames qui ont des formes en commun dans la vidéo.
 En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec $2 < t' - t < 90$ (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et t'.
 
@@ -488,7 +486,21 @@ Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Al
 L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
 
 *** Détection de contours
-Avec des algorithmes comme le filtre de Canny 
+#+CAPTION: Détection de contours par filtre de Canny
+#+ATTR_LATEX: :width 10cm
+[[file:canny_edge2.png]]
+Avec des algorithmes comme le filtre de Canny il est possible de détecter les contours des objets dans une image. Cette algorithme applique une opération de convolution sur les pixels de l'image. La matrice résultant de l'application de cette convolution est l'image décrivant les contours dans l'image source. Cette algorithme est sensible au bruit dans l'image, c'est pourquoi il est nécessaire d'opérer un lissage (par exemple un filtrage Gaussien) avant de l'appliquer.
+L'intéret de la détection de contours est de réduire l'information à traiter dans une image.
+
+*** Logos et contours
+#+CAPTION: Comparaison des contours entre deux frames logos
+#+ATTR_LATEX: :width 10cm
+[[file:comparison_idea.png]]
+#+CAPTION: Comparaison des contours entre deux frames non-logo
+#+ATTR_LATEX: :width 10cm
+[[file:comparison_idea2.png]]
+
+Les logos sont des séquences d'images incrustés dans la vidéo. En général, chaque séquence d'image est la même au pixel près que les autres. Nécessairement, les contours détectés par filtre de Canny seront les mêmes.
 
 *** Mosaique de plan
 #+CAPTION: ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) label:mosaic
@@ -528,30 +540,19 @@ Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binai
 Notre algorithme est sensible au plan fixe et aux images avec beaucoup de bruits (ces images ont beaucoup de contours détectés par l’algorithme de détection de contours).
 Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur les plans, notamment en rajoutant du blur ou en supprimant le background, néanmoins, nous ne sommes pas parvenus à filtrer 100% des faux-positifs.
 
-** Apprentissage profond - Première approche : convolution 3D
+** Convolution 3D
 Dans cette approche, nous allons implémenter une méthode similaire à cite:Tran_2015.
 L'idée va être d'entrainer un réseau à convolution avec une couche de convolution 3D.
 Cette couche va prendre en entrée une séquence d'images et va prédire une classe logo ou non-logo. 
 Pour réduire la zone de recherche, seulement les séquences d'images entre deux plans (détectées avec cite:Abd_Almageed_2008) seront traitées.
 Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images labellisées (logo/non-logo).
 Comme pour cite:Tran_2015, nous pensons que la convolution 3D va permettre au réseau d'apprendre l'apparence des logos mais aussi leur animation dans la vidéo.
-** Flux optique
-[[file:optical_flow2.png]]
-Le flux optique décrit le déplacement des objets entre deux frames consécutifs, ce mouvement peut être causé par un déplacement de la caméra ou de l'objet lui-même.
-Le flux optique est une matrice X * Y * D, où X et Y sont l'axe des absisses et des ordonnées (resp.) dans l'image, et D une droite décrivant le déplacement du pixel à la position (x,y) entre le frame t et le frame t + 1.
-
-De la même manière que pour cite:wang11_action, nous allons traquer le déplacement des objets grâce au flux optique.
-Il existe deux types d'algorithme de calcul du flux optique :
-- sparse/creux : seulement les déplacements de certains points d'intéret vont être traqués (méthode de Lucas-Kanade)
-- dense : le déplacement de tous les points dans l'image vont être traqués (algorithme de Gunner Farneback)
-Le calcul du flux optique dense est plus couteux mais à l'avantage de ne pas nécessiter de déterminer les points d'intéret dans l'image avant de calculer le flux optique.
-
-** Apprentissage profond - Deuxième approche : convolution 2D sur des images de flux optique
+** Cconvolution 2D sur des images de flux optique
 Dans cette approche, nous allons entraîner un classifieur d'image de flux optique. 
 L'objectif est de capturer l'information du mouvement des objets dans des séquences d'images grâce au flux optique, puis de projeter cette information dans un plan 2D (donc des images) afin de pouvoir entrainer un classifieur à partir de ces représentations 2D.
 Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd_Almageed_2008).
 
-** Apprentissage profond - Troisième approche : convolution 3D sur des images de flux optique
+** Convolution 3D sur des images de flux optique
 
 * Collecte des données & entraînement
 ** Datasets
@@ -576,7 +577,8 @@ Pour obtenir les images de flux optiques, nous allons utiliser notre algorithme 
 Pour chacune de  ces séquences, nous allons calculer son flux optique. Le problème est qu'il n'est possible de ne calculer le flux optique qu'entre deux frames; or, une séquence s'étale sur plus que deux frames (dans notre cas, 20 frames). 
 Afin d'obtenir une seule image pour le flux optique de la séquence, il existe plusieurs méthodes.
 *** Image de flux optique : 2L canaux
-Dans cite:DBLP:journals/corr/SimonyanZ14, les auteurs proposent de représenter le flux optique d'une séquence d'images comme une image avec 2L canaux, où L est le nombre d'images dans la séquence. Les canaux pairs représentent le déplacement vertical des objets, et les canaux impairs le déplacement horizontal. Ainsi, chaque image qui servira d'entrée au classifieur sera de dimension $\R^{w*h*2L}$ où w et h sont la longueur et la largeur en pixels et L le nombre d'images dans la séquence. Ces images n'auront pas un contenu visuel identifiable pour l'humain, mais seront comprises par un réseau à convolution. Concrètement, cela revient à stocker deux images de flux pour chaque image de la séquence; la première image est l'information horizontal de déplacement, la seconde l'information vertical de déplacement.
+**** TODO fix dead link here
+Dans cite:DBLP:journals/corr/SimonyanZ14, les auteurs proposent de représenter le flux optique d'une séquence d'images comme une image avec 2L canaux, où L est le nombre d'images dans la séquence. Les canaux pairs représentent le déplacement vertical des objets, et les canaux impairs le déplacement horizontal. Ainsi, chaque image qui servira d'entrée au classifieur sera de dimension $R^{w*h*2L}$ où w et h sont la longueur et la largeur en pixels et L le nombre d'images dans la séquence. Ces images n'auront pas un contenu visuel identifiable pour l'humain, mais seront comprises par un réseau à convolution. Concrètement, cela revient à stocker deux images de flux pour chaque image de la séquence; la première image est l'information horizontal de déplacement, la seconde l'information vertical de déplacement.
 #+CAPTION: Obtention du flux optique pour une séquence, avec séparation du flux vertical (droite) et horizontal (gauche) label:flux-trajectory
 #+ATTR_LATEX: :width 10cm
 [[file:optical_flow_two_stream.png]]
@@ -614,13 +616,15 @@ Pour les réseaux à convolution 2D (classifieur d'images représentant la somme
 
 Le ratio ensemble d'entrainement/ensemble de validation est de 8/10.
 ** Difficultés rencontrées
-*** Adaptation des données
+*** Adaptation des données pour le réseau
 Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
 Pour pouvoir donner en entrée ces données aux réseaux, nous avons besoin de transformer les séquences d'images en vecteur de dimension 4 (nombres d'images, largeur de chaque image, longueur de chaque image et nombre de canaux de chaque image) et de faire en sorte de pouvoir donner ces vecteurs en entrée du réseau par batch.
 *** Avoir une machine assez puissante pour la convolution 3D
-
+L'entrainement n'est pas possible sur une machine non dotée d'une carte graphique puissante. Pour ça, nous avons du utilisé une machine virtuelle fournie par Google. L'inconvénient de cette solution est le prix. En effet, celle-ci coûte près de 300€ par mois; ce qui ne nous a permis d'essayer autant de modèle qui nous aurions aimé, car l'entrainement est long et donc coûteux.
+*** La gestion de l'ensemble de données
+Pour 1000 exemples de séquences logo et 1000 exemples de séquences non-logo, la taille de l'ensemble de données atteint presque les 10go pour plus de 400000 images. Manipuler autant de données est un problème complexe à bien des niveaux : l'importation/exportation des fichiers est longue (surtout le déplacement de ceux-ci entre la machine locale et la machine à distance), la réorganisation du dossier est compliquée en cas d'erreur, les données erronnées (par exemple si le dossier représentant une séquence est vide suite à une défaillance du scrapper) sont difficilement détectables, etc... À titre d'exemple, même sur la machine très puissante fournie par Google, l'extraction de l'archive contenant toutes les images de notre ensemble de données prend plus d'une heure.
 #+LATEX: \newpage
-* Comparaison des approches
+* Résultats obtenus
 Dans cette partie, nous allons évaluer chaque approche sur le même ensemble d'évalutation.
 Puis nous allons comparer les résultats obtenus et enfin nous allons conclure sur l'efficacité des différences approches.
 

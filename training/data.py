@@ -141,9 +141,6 @@ class DataSet():
                 if sequence is None:
                     print("Can't find sequence. Did you generate them?")
                     raise
-            if (np.array(sequence).shape == (20, 256,144,3)):
-                X.append(np.array(sequence))
-                y.append(self.get_class_one_hot(row[1]))
 
         return np.array(X), np.array(y)
 

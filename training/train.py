@@ -7,13 +7,6 @@ from data import DataSet
 import time
 import os.path
 
-def check(X):
-	for x in X:
-		for y in x:
-			if y.shape != (256,144,3):
-				return (x,y)
-	return (None,None)
-    
 def train(data_type, seq_length, model, saved_model=None,
           class_limit=None, image_shape=None,
           load_to_memory=False, batch_size=32, nb_epoch=100):
