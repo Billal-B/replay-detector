@@ -96,7 +96,7 @@ def main():
     model = 'c3d'
     saved_model = None#'data/checkpoints/c3d-images.001-0.805.hdf5'
     class_limit = 2  # int, can be 1-101 or None
-    seq_length = 20
+    seq_length = 19
     load_to_memory = False  # pre-load the sequences into memory
     batch_size = 32
     nb_epoch = 16
