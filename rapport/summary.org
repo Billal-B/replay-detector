@@ -608,9 +608,16 @@ Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la c
 Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
 En tout, plus de 400000 images sont générées (8 go sur disque).
 ** Entraînement et architectures des modèles
-L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est TensorFlow.
+L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
 Pour les réseaux à convolution 2D (classifieur d'images représentant la somme du flux optique dans la vidéo et classifieur d'images représentant le flux optique dans une séquence par une image avec 38 canaux), nous allors reprendre l'architecture proposée par cite:DBLP:journals/corr/SimonyanZ14.
+
+Le ratio ensemble d'entrainement/ensemble de validation est de 8/10.
+** Difficultés rencontrées
+*** Adaptation des données
+Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
+Pour pouvoir donner en entrée ces données aux réseaux, nous avons besoin de transformer les séquences d'images en vecteur de dimension 4 (nombres d'images, largeur de chaque image, longueur de chaque image et nombre de canaux de chaque image) et de faire en sorte de pouvoir donner ces vecteurs en entrée du réseau par batch.
+*** Avoir une machine assez puissante pour la convolution 3D
 
 #+LATEX: \newpage
 * Comparaison des approches
@@ -619,7 +626,7 @@ Puis nous allons comparer les résultats obtenus et enfin nous allons conclure s
 
 ** Procédure d'évaluation
 L'ensemble d'évaluation est le suivant : une vidéo de ligue 1 de 150k frames, une vidéo de ligue 1 de 80k frames, une vidéo de liga et enfin une vidéo de premier league.
-Dans toutes les expérimentations, la vidéo est découpée en plans (plan).
+Dans toutes les expérimentations, la vidéo est découpée en plans (plan). L'évaluation porte sur le nombre de logos correctement détectés dans la vidéo.
 Soit S l'ensemble des plans.
 
 ** Résultats pour ORB
@@ -674,11 +681,9 @@ En effet, elle n'est pas capable de détecter les replays si le logo n'est pas l
 
 Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logo de replay.
 
-Cette méthode servira aussi de /baseline/ pour évaluer l'efficacité des modèles par apprentissage profond.
-
-
 #+LATEX: \newpage
 * Appendice
++ Batch : Un groupe d'échantillon d'entrainement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
 + Clustering : procédé permettant de regrouper des éléments
 + Histogramme : représentation d'une image en fonction de ses canaux de couleurs (rouge, vert, bleu)
 + Frame : une image à l'instant t d'une vidéo
