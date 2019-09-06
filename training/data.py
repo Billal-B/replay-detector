@@ -130,6 +130,7 @@ class DataSet():
         for row in data:
 
             if data_type == 'images':
+                print(row)
                 frames = self.get_frames_for_sample(row)
                 frames = self.rescale_list(frames, self.seq_length)
                 # Build the image sequence
@@ -248,7 +249,10 @@ class DataSet():
         """Given a list and a size, return a rescaled/samples list. For example,
         if we want a list of size 5 and we have a list of size 25, return a new
         list of size five which is every 5th element of the origina list."""
-        assert len(input_list) >= size
+        if len(input_list) < size:
+            print("ERROR >>>>>")
+            print(input_list)
+            print(size)
 
         # Get the number to skip between iterations.
         skip = len(input_list) // size
