@@ -372,8 +372,7 @@ En premier lieu, nous proposons deux approches n'utilisant que des algorithmes d
 - la seconde utilise la détection de contours pour trouver les images avec des contours similaires dans la vidéo
 Ensuite, nous présentons trois approches par apprentissage profond :
 - la première utilise un réseau à convolution 3D sur une séquence d'images (similaire à cite:Tran_2015)
-- la seconde utilise un réseau à convolution 2D sur des images représentant le flux optique des objets dans la vidéo
-- la troisème utilise un réseau à convolution 3D sur des séquences d'images représentant le flux optique des objets dans la vidéo
+- la seconde utilise un réseau à convolution 3D sur des séquences d'images représentant le flux optique des objets dans la vidéo
 
 ** Détection des plans
 Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logo pouvant se trouver au début et à la fin des replays.
@@ -540,19 +539,19 @@ Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binai
 Notre algorithme est sensible au plan fixe et aux images avec beaucoup de bruits (ces images ont beaucoup de contours détectés par l’algorithme de détection de contours).
 Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur les plans, notamment en rajoutant du blur ou en supprimant le background, néanmoins, nous ne sommes pas parvenus à filtrer 100% des faux-positifs.
 
-** Convolution 3D
+** Convolution 3D sur des séquences d'images
 Dans cette approche, nous allons implémenter une méthode similaire à cite:Tran_2015.
 L'idée va être d'entrainer un réseau à convolution avec une couche de convolution 3D.
 Cette couche va prendre en entrée une séquence d'images et va prédire une classe logo ou non-logo. 
 Pour réduire la zone de recherche, seulement les séquences d'images entre deux plans (détectées avec cite:Abd_Almageed_2008) seront traitées.
 Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images labellisées (logo/non-logo).
 Comme pour cite:Tran_2015, nous pensons que la convolution 3D va permettre au réseau d'apprendre l'apparence des logos mais aussi leur animation dans la vidéo.
-** Cconvolution 2D sur des images de flux optique
-Dans cette approche, nous allons entraîner un classifieur d'image de flux optique. 
-L'objectif est de capturer l'information du mouvement des objets dans des séquences d'images grâce au flux optique, puis de projeter cette information dans un plan 2D (donc des images) afin de pouvoir entrainer un classifieur à partir de ces représentations 2D.
-Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd_Almageed_2008).
 
-** Convolution 3D sur des images de flux optique
+** Convolution 3D sur des séquences d'images de flux optique
+Dans cette approche, nous allons entraîner un classifieur de séquences d'images de flux optique.
+Nous pensons que, comme pour l'approche par convolution 3D sur les séquences d'images logos/non-logos, la convolution 3D va permettre d'apprendre le déplacement des objets dans le temps. La troisième dimension du réseau est la temporalité, et les deux autres sont la composante spatialle modélisée par les images de flux optiques.
+Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images de flux optique labellisées (logo/non-logo).
+Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd_Almageed_2008).
 
 * Collecte des données & entraînement
 ** Datasets
@@ -561,8 +560,6 @@ L'objectif de la collecte de données est d'obtenir les ensembles de données su
 - Dataset logo
 Chaque élément du dataset contient :
 - une séquence de 20 images représentant la séquence (pour un classifieur d'image à convolution 3D)
-- une séquence 38 images représentant une seule image (avec 38 canaux) de flux optique par la méthode cite:DBLP:journals/corr/SimonyanZ14 (pour un classifieur de flux optique à convolution 2D)
-- une image représentant la somme des flux optiques (pour un classifieur de flux optique à convolution 2D)
 - une séquence 19 images représentant (pour un classifieur de flux optique à convolution 3D)
 
 ** Collecte des données
@@ -574,29 +571,15 @@ En effet, elle est :
 
 ** Obtention des images de flux optiques
 Pour obtenir les images de flux optiques, nous allons utiliser notre algorithme de détection de logo par matching de contours afin d'obtenir les séquences d'images comprises entre deux plans.
-Pour chacune de  ces séquences, nous allons calculer son flux optique. Le problème est qu'il n'est possible de ne calculer le flux optique qu'entre deux frames; or, une séquence s'étale sur plus que deux frames (dans notre cas, 20 frames). 
-Afin d'obtenir une seule image pour le flux optique de la séquence, il existe plusieurs méthodes.
-*** Image de flux optique : 2L canaux
-**** TODO fix dead link here
-Dans cite:DBLP:journals/corr/SimonyanZ14, les auteurs proposent de représenter le flux optique d'une séquence d'images comme une image avec 2L canaux, où L est le nombre d'images dans la séquence. Les canaux pairs représentent le déplacement vertical des objets, et les canaux impairs le déplacement horizontal. Ainsi, chaque image qui servira d'entrée au classifieur sera de dimension $R^{w*h*2L}$ où w et h sont la longueur et la largeur en pixels et L le nombre d'images dans la séquence. Ces images n'auront pas un contenu visuel identifiable pour l'humain, mais seront comprises par un réseau à convolution. Concrètement, cela revient à stocker deux images de flux pour chaque image de la séquence; la première image est l'information horizontal de déplacement, la seconde l'information vertical de déplacement.
-#+CAPTION: Obtention du flux optique pour une séquence, avec séparation du flux vertical (droite) et horizontal (gauche) label:flux-trajectory
-#+ATTR_LATEX: :width 10cm
-[[file:optical_flow_two_stream.png]]
-
-*** Image de flux optique : somme des fluxs
-Une autre méthode pour obtenir une image de flux optique à partir d'une séquence de flux optique est de calculer la somme de tous les flux optiques.
-#+CAPTION: Obtention du flux optique pour une séquence par somme de tous les fluxs de la séquence
-#+ATTR_LATEX: :width 10cm
-[[file:optical_flow_sum.png]]
-
-
+L'algorithme va récupérer des séquences d'images logos/non-logos. Pour obtenir une séquence d'images de flux optique à partir de ces séquences, il suffit de calculer le flux optique entre une frame et la frame qui la suite; ainsi, nous obtenons une matrice de dimension, et donc une image.
+Dans notre cas, les séquences d'images sont de taille 20, donc les séquences d'images de flux optique sont de taille 19.
 
 ** Architecture du scrapper
 #+CAPTION: Architecture proposé pour le scrapper de logos
 #+ATTR_LATEX: :width 15cm
 [[file:arch_scrap.png]]
 Nous voulons une architecture de scrapping qui soit distribuée.
-En effet, le traitement d'une vidéo prend en moyenne cinq minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
+En effet, le traitement d'une vidéo prend en moyenne trente minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
 Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui upload les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
 
@@ -612,7 +595,9 @@ En tout, plus de 400000 images sont générées (8 go sur disque).
 ** Entraînement et architectures des modèles
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
-Pour les réseaux à convolution 2D (classifieur d'images représentant la somme du flux optique dans la vidéo et classifieur d'images représentant le flux optique dans une séquence par une image avec 38 canaux), nous allors reprendre l'architecture proposée par cite:DBLP:journals/corr/SimonyanZ14.
+*** Architecture pour le classifieur de séquences d'images logos/non-logos
+
+*** Architecture pour le classifieur de séquences d'images de flux optique
 
 Le ratio ensemble d'entrainement/ensemble de validation est de 8/10.
 ** Difficultés rencontrées
