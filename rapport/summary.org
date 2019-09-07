@@ -591,13 +591,17 @@ Un cluster Kubernetes avec un load balancer va se charger d'ordonner les contain
 Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
 ** Données collectées
 Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
-En tout, plus de 400000 images sont générées (8 go sur disque).
+En tout, plus de 200000 images sont générées (8 go sur disque) : 
+- 2611 séquences de 20 images non-logos
+- 2611 séquences de 20 images logos
+- 2611 séquences de 19 images de flux optique non-logos
+- 2611 séquences de 19 images de flux optique logos
 ** Entraînement et architectures des modèles
+#+CAPTION: Architecture utilisée pour le réseau à convolution 3D
+#+ATTR_LATEX: :width 10cm
+[[file:c3d_model.png]]
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
-*** Architecture pour le classifieur de séquences d'images logos/non-logos
-
-*** Architecture pour le classifieur de séquences d'images de flux optique
 
 Le ratio ensemble d'entrainement/ensemble de validation est de 8/10.
 ** Difficultés rencontrées
@@ -671,6 +675,7 @@ En effet, elle n'est pas capable de détecter les replays si le logo n'est pas l
 Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logo de replay.
 
 #+LATEX: \newpage
+
 * Appendice
 + Batch : Un groupe d'échantillon d'entrainement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
 + Clustering : procédé permettant de regrouper des éléments
