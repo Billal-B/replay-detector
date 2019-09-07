@@ -24,14 +24,29 @@ def main():
         raise ValueError("Invalid model. See train.py for options.")
 
     sequence_folders = get_sequence_folders()
-    sequences = get_all_sequences_in_memory(seq_length, image_shape, sequence_folders)
+    names_and_sequences = get_all_sequences_in_memory(seq_length, image_shape, sequence_folders)
     print("Loading the model...")
     model = load_model('model/1567514047.2198603_replay_model.h5')
     print("Done loading the model.")
-    for sequence in sequences:
-        print("Prediction for " + str(sequence))
+    logos = []
+    not_logos = []
+    for (name, sequence) in names_and_sequences:
+        idx = name.split('_')[-1]
         pred = model.predict(sequence.reshape((1, seq_length, image_shape[0], image_shape[1], image_shape[2])))
-        print(pred)
+        if pred[0][0] > 0.50:
+            not_logos.append(idx)
+        else:
+            logos.append(idx)
+    sorted_logos = sorted(logos, key=lambda item: (int(item.partition(' ')[0])
+                                       if item[0].isdigit() else float('inf'), item))
+    sorted_not_logos = sorted(not_logos, key=lambda item: (int(item.partition(' ')[0])
+                                       if item[0].isdigit() else float('inf'), item))
+    print("LOGOS : ")
+    print(str(sorted_logos))
+    print("***************************")
+    print("NOT LOGOS : ")
+    print(str(sorted_not_logos))
+
 
 def get_all_sequences_in_memory(seq_length, image_shape, sequence_folders):
     sequences = []
@@ -40,7 +55,7 @@ def get_all_sequences_in_memory(seq_length, image_shape, sequence_folders):
         frames = get_frames_for_sample(row)
         frames = rescale_list(frames, seq_length)
         sequence = build_image_sequence(frames, image_shape)
-        sequences.append(np.array(sequence))
+        sequences.append((row, np.array(sequence)))
     return sequences
 
 
