@@ -14,3 +14,7 @@ ReplayDetector.jar
 frame
 preprocess
 video*
+*.mp4
+*.mp4.part
+eval_data/*
+*.zip

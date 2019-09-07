@@ -5,13 +5,11 @@
 #+LATEX_HEADER: \usepackage{placeins}
 #+LATEX_HEADER: \usepackage[francais]{babel}
 #+LATEX_HEADER: \selectlanguage{francais}
-
-
 #+OPTIONS: \n:t
 #+LATEX: \newpage
 * Sportagraph
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R&D).
-Son produit est un DAM (Digital Asset Manager) spéecialisé dans les événements sportifs.
+Son produit est un DAM (Digital Asset Manager) spécialisé dans les événements sportifs.
 
 Le DAM permet aux utilisateurs de stocker et de gérer plusieurs types de fichiers (principalement des images, mais les vidéos et d’autres types sont aussi supportés). 
 L’équipe travaillant sur ce projet est composée de :
@@ -20,13 +18,11 @@ L’équipe travaillant sur ce projet est composée de :
 + Régis Jean-Gilles : Lead Server Developer (mon tuteur d'alternance)
 + Benoit Hozjan : SaaS operation manager
 + Francois Jacquier : Lead Developer Front
-+ Khedidja Almherabet : Développeur front-end
++ Khedidja Almherabet : Operation manager
 + Mate Gyomrei : Développeur front-end
 + Daniel Denke : Développeur iOS
 + Zoltan Tarsoly : Test Automation Engineer
 + Youva Ammaouche : Assistant chef de projet
-+ Stéphane : Développeur front-end
-+ Ashant : Développeur front-end
 
 En tant que développeur back end, je suis chargé de rajouter de nouvelles fonctionnalitées au DAM.
 L'une des missions qui m'a été affectée est la détection des replays dans les vidéos de sport.
@@ -38,11 +34,11 @@ Au cours des dernières années, les techniques d'apprentissage automatique ont 
 Les avancements dans le domaine de l'apprentissage profond et l'accès à un volume massif de données ont permi de mettre en place des solutions de plus en plus performantes.
 En particulier, l'adoption globale des téléphones intelligents et de leur caméra intégrée a accru de manière exponentielle le nombre de vidéos disponibles sur Internet, à tel point qu'il est devenu impossible pour l'humain d'ingérer manuellement le contenu de toutes les vidéos disponibles sur la toile.
 Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
-Plus particulièrement, nous focalisons notre recherche sur les vidéos de sport.
+Plus particulièrement, nous focalisons notre recherche sur les vidéos de football.
 
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.
 
-*Pourquoi les replays ?* Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.
+*Qu'est-ce qu'un replay ?* Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
 En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, un replay est une annotation humaine sur une vidéo.
 Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
@@ -54,7 +50,7 @@ Les ralentis sont un type particulier de replays où l'action est montrée de no
 C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détecter l'effet de /slow-motion/) n'est pas un bon critère pour la détection de replay.
 
 L'objectif de notre recherche est double.
-Dans un premier temps, nous mettons en place un système de détection de replays en utilisant uniquement les méthodes "classiques" tels que ORB (cite:Rublee_2011).
+Dans un premier temps, nous mettons en place un système de détection de replays en utilisant uniquement les méthodes "classiques" tels que ORB (cite:Rublee_2011) ou la détection de contours.
 Ensuite, nous comparons plusieurs approches d'apprentissage automatique pour la tâche de détection dans les vidéos.
 Enfin, nous comparons l'efficacité des méthodes de vision par ordinateur "classiques" aux méthodes par apprentissage profond (deep learning).
 
@@ -80,12 +76,12 @@ Toutes les frames dont le score est inférieur à un certain seuil sont écarté
 *** Recherche du logo template parmi les frames filtrées
 Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.
 Pour déterminer le logo template parmi les frames filtrées, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
-Pour trouver le logo template, nous allons chercher dans le cluster avec le centre de cluster le plus élevé, puis sélectionner la frame m minimisant la distance avec toutes les autres frames du cluster.
+Pour trouver le logo template, il faut d'abord trouver le cluster qui contient les logos. Les auteurs estiment que celui-ci est celui qui a le centre de cluster le plus élevé.
+Une fois le cluster de logos déterminé, le /logo template/ est la frame m qui minimise la distance avec toutes les autres frames du cluster. La formule qui permet de calculer la distance est donnée en ref:calc-dist.
 
 #+CAPTION: Formule de la distance entre deux frames dans le cluster label:calc-dist
 #+ATTR_LATEX: :width 10cm
 [[file:robust_calc_dist.JPG]]
-
 
 *** Recherche des logo
 Une fois que le logo template est déterminé, chaque logo trouvé en précédemment va être comparé avec le logo template.
