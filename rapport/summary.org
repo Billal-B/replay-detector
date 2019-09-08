@@ -598,11 +598,22 @@ En tout, plus de 200000 images sont générées (8 go sur disque) :
 #+CAPTION: Architecture utilisée pour le réseau à convolution 3D
 #+ATTR_LATEX: :width 10cm
 [[file:c3d_model.png]]
-
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
 
 Le ratio ensemble d'entrainement/ensemble de validation est de 0,8.
+
+*** Entrainement du classifieur de séquences d'images 
+#+CAPTION: Entrainement du classifieur de séquence d'images
+#+ATTR_LATEX: :width 10cm
+[[file:conv_train.png]]
+Nous voyons que le minima de la fonction de perte (val_loss) est atteint après 11 epoch (0,46), la précision (val_acc) sur l'ensemble de test après 11 epoch est de 82%.
+*** Entrainement du classifieur de séquences d'images de flux optique
+#+CAPTION: Entrainement du classifieur de séquence d'images de flux optique
+#+ATTR_LATEX: :width 10cm
+[[file:flow_train.png]]
+Le minima de la fonction de perte (val_loss) est atteint après 7 epoch (0,50), pour une précision (val_acc) de 77% sur l'ensemble de test.
+
 ** Difficultés rencontrées
 *** Adaptation des données pour le réseau
 Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
@@ -614,7 +625,6 @@ Pour 1000 exemples de séquences logo et 1000 exemples de séquences non-logo, l
 #+LATEX: \newpage
 * Résultats obtenus
 Dans cette partie, nous allons évaluer chaque approche sur le même ensemble d'évalutation.
-Puis nous allons comparer les résultats obtenus et enfin nous allons conclure sur l'efficacité des différences approches.
 
 ** Procédure d'évaluation
 L'ensemble d'évaluation est le suivant : une vidéo de ligue 1 de 150k frames, une vidéo de ligue 1 de 80k frames, une vidéo de liga et enfin une vidéo de premier league.
@@ -678,6 +688,26 @@ En effet, elle n'est pas capable de détecter les replays si le logo n'est pas l
 Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logo de replay.
 
 #+LATEX: \newpage
+** Résultats pour l'approche par apprentissage profond
+#+CAPTION: Résultats obtenus par les réseaux 
+#+ATTR_LATEX: :width 15cm
+[[file:res_conv.png]]
+Les résultats obtenus par les réseaux sont moins bons que ce que nous espérions. 
+Le réseau à convolution 3D sur des séquences d'images obtient des résultats satisfaisant sur la vidéo de Premier League (PL) avec 65% de précision et 40% de rappel; mais de mauvais résultats sur les autres vidéos.
+Le réseau à convolution 3D sur des séquences d'images de flux optique obtient de mauvais résultats sur toutes les vidéos; le résultat obtenu pour la vidéo de Liga est néanmoins intéressant. En effet, avec une précision de 88%, il semblerait que le réseau est commencé à apprendre à reconnaître les séquences non-logo.
+
+Les possibles raisons pouvant expliquer ces mauvais résultats sont les suivantes :
+- les données d'entrainement ne sont pas assez représentatives (I) : l'ensemble d'entrainement est constitué de 50% de séquences logos et de 50% de séquences non logos alors que dans les faits, seulement 5% en moyenne des séquences dans les matchs de football sont des séquences logos. Nous avons procédé ainsi pour avoir un ensemble de données plus petit que si nous avions gardé toutes les séquences non-logos (le dataset aurait été près de 5 fois plus volumineux)
+-  les données d'entrainement ne sont pas assez représentatives (II) : la majorité des séquences logos (~90%) que nous avons dans l'ensemble d'entrainement sont des logos de Liga. Ceci est du au fait que la plupart des vidéos de match de football entier auquel nous avons pu accéder sont des vidéos de Liga.
+- les données d'entrainement ne sont pas d'assez bonne qualité : certaines vidéos sont de mauvaise qualité et même dans certains cas les logos sont floutés
+- le scrapper n'est pas parfait : l'annotation logo/non-logo des séquences est automatique. Il est probable qu'une quantité non négligeable de séquences soient incorrectement annotées.
+- l'ensemble de données est trop petit : nous entraînons les réseaux "de zéro", il est probable que 2000 séquences logos et 2000 séquences non-logos ne suffisent pas. Nous avons fait le choix de garder l'ensemble d'entrainement à 4000 exemples car un dataset plus gros aurait accru le temps d'entrainement (et donc le coût de la machine distante).
+
+* Conclusion
+L'approche la plus efficace pour la détection de replays est l'approche par détection de contours. 
+Même si les résultats obtenus par les réseaux ne sont pas excellent, nous pensons qu'ils sont parvenus à apprendre.
+Les résultats obtenus pour la vidéo de Premier League nous laissent penser que le réseau est /capable/ d'apprendre à reconnaître les logos dans les vidéos. 
+
 * Appendice
 + Batch : Un groupe d'échantillon d'entrainement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
 + Clustering : procédé permettant de regrouper des éléments
