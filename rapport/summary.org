@@ -580,7 +580,7 @@ En effet, le traitement d'une vidéo prend en moyenne trente minutes, il est don
 Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui upload les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
 
-**** Kubernetes
+*** Kubernetes
 #+CAPTION: Cluster Kubernetes sur GCP
 #+ATTR_LATEX: :width 10cm
 [[file:kubernetes_pods.png]]
@@ -588,14 +588,21 @@ Un cluster Kubernetes avec un load balancer va se charger d'ordonner les contain
 Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
 ** Données collectées
 Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
-En tout, plus de 400000 images sont générées (8 go sur disque).
+En tout, plus de 200000 images sont générées (8 go sur disque) :
+- 2611 séquences de 20 images non-logos
+- 2611 séquences de 20 images logos
+- 2611 séquences de 19 images de flux optique non-logos
+- 2611 séquences de 19 images de flux optique logos
 
 ** Entraînement et architectures des modèles
+#+CAPTION: Architecture utilisée pour le réseau à convolution 3D
+#+ATTR_LATEX: :width 10cm
+[[file:c3d_model.png]]
+
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015.
-Pour les réseaux à convolution 2D (classifieur d'images représentant la somme du flux optique dans la vidéo et classifieur d'images représentant le flux optique dans une séquence par une image avec 38 canaux), nous allors reprendre l'architecture proposée par cite:DBLP:journals/corr/SimonyanZ14.
 
-Le ratio ensemble d'entrainement/ensemble de validation est de 8/10.
+Le ratio ensemble d'entrainement/ensemble de validation est de 0,8.
 ** Difficultés rencontrées
 *** Adaptation des données pour le réseau
 Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
