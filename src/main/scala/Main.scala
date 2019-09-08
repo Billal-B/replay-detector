@@ -21,7 +21,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
 import com.google.cloud.storage.StorageOptions
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 // for JSON serialization/deserialization following dependency is required:
 // "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.7"
@@ -134,13 +134,6 @@ object WebServer extends App {
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
 }
 
-object Main extends App {
-  System.loadLibrary(Core.NATIVE_LIBRARY_NAME)
-  import scala.concurrent.ExecutionContext.Implicits.global
-  val res = YoutubeLogoExtractor("", None, VideoInfo(10000, Int.MaxValue, 100, 100, "video"))
-  Await.ready(res, Duration.Inf)
-}
-
 object YoutubeLogoExtractor extends Configuration {
 
   def apply(youtubeUrl: String,
@@ -151,9 +144,9 @@ object YoutubeLogoExtractor extends Configuration {
     Future {
       setupRun(videoInfo.runId)
       println(s"Starting to parse the video $youtubeUrl.\n$videoInfo")
-      //downloadFromYoutube(youtubeUrl, videoInfo.runId)
+      downloadFromYoutube(youtubeUrl, videoInfo.runId)
       replayDetection(videoInfo.runId + ".mp4", knownLogoTag, videoInfo)
-    }//.flatMap(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
+    }.flatMap(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
       .map{_ => println(s"Completed analysis for video $youtubeUrl")}
       .recover {
         case NonFatal(ex) =>
@@ -241,7 +234,6 @@ object YoutubeLogoExtractor extends Configuration {
     println(s"Time to find shots (found ${foundShots.length}): $computeSlidingWindowsTime")
 
     // replay detection
-    /*
     val replayDetector = new ReplayDetector(capture, videoInfo) with Configuration
     replayDetector.saveShots(
       videoInfo.runId,
@@ -250,8 +242,8 @@ object YoutubeLogoExtractor extends Configuration {
       videoInfo.runId + "/" + logoFolderName) // !!!! needs to be SORTED (ascending) !!!!
     val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
     println("Time to save shot: " + saveShotTime)
-*/
-/*
+
+
     val logos = knownLogoTag match {
       case Some(tag)=> replayDetector.matchKnownLogo(videoInfo.runId, foundShots, tag)
       case None => replayDetector.findMachingShots(videoInfo.runId, foundShots)
@@ -277,8 +269,7 @@ object YoutubeLogoExtractor extends Configuration {
     val nonLogos = scala.util.Random
       .shuffle(shotFrames.toSet -- distinctLogos)
       .take(distinctLogos.size)
-  */
-    OpenCvUtils.saveFrames(capture, foundShots, videoInfo.runId + "/" + logoFolderName + "not_logo", videoInfo.runId, mosaicSize)
+    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, videoInfo.runId + "/" + logoFolderName + "not_logo", videoInfo.runId, mosaicSize)
 
     println("Time total : " + (System.currentTimeMillis() - t))
 
