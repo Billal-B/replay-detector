@@ -1,16 +1,18 @@
-import java.io.File
+import java.io.{File, FileWriter, PrintWriter}
 import java.util
 
 import scala.collection.JavaConverters._
 import org.opencv.videoio.Videoio._
 import org.opencv.imgcodecs.Imgcodecs._
 import org.opencv.imgproc.Imgproc._
+import org.opencv.highgui.HighGui._
 import org.opencv.core.Core._
 import org.opencv.core.CvType._
 import org.opencv.core.{Core, CvType, Mat, MatOfFloat, MatOfInt, MatOfPoint, MatOfPoint2f, Point, Scalar, Size}
 import org.opencv.videoio.VideoCapture
 import org.opencv.video.Video.calcOpticalFlowFarneback
 
+import scala.io.Source
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
@@ -47,7 +49,48 @@ object OpenCvUtils {
     val flowSumfolder = new File(logoFolder.getCanonicalPath + "/flowSum/")
     flowSumfolder.mkdir()
 
-    frameIdxs.foreach{idx =>
+    var logos = scala.collection.mutable.ArrayBuffer.empty[Int]
+    var notLogos = scala.collection.mutable.ArrayBuffer.empty[Int]
+    frameIdxs.sorted.foreach{idx =>
+      var isWaitKey = true
+      var c = 0
+      while (isWaitKey) {
+        val frame = new Mat()
+        for (i <- 1 to saveSize if isWaitKey) {
+          capture.set(CAP_PROP_POS_FRAMES, idx - (saveSize / 2).toInt + i)
+          capture.read(frame)
+          imshow(idx.toString, frame)
+          waitKey(15)
+        }
+        imshow(idx.toString, frame)
+        waitKey(0) match {
+          case 69 =>
+            val fw = new FileWriter("logo_gold", true) ;
+            fw.write(idx.toString+ "\n") ;
+            fw.close()
+            logos.+=(idx)
+            isWaitKey = false
+          case 32 =>
+            val fw = new FileWriter("non_logo_gold", true) ;
+            fw.write(idx.toString + "\n") ;
+            fw.close()
+            notLogos.+=(idx)
+            isWaitKey = false
+          case -1 => ()
+          case other =>
+            println("Unknown char (e for logo, spc for not logo): " + other)
+        }
+        println("REALEASE")
+        frame.release()
+      }
+
+         println("LOGO =>>>> ")
+      println(logos.mkString(" "))
+
+      println("NOT LOGO =>>>> ")
+      println(notLogos.mkString(" "))
+
+      /*
       val idxConv3dDir = new File(conv3dfolder.getCanonicalPath + "/" + tag + "_" + idx)
       idxConv3dDir.mkdir()
       val idxFlow3dDir = new File(flow3dfolder.getCanonicalPath + "/" + tag + "_" + idx)
@@ -75,6 +118,8 @@ object OpenCvUtils {
       }
 
       framesToSave.foreach(_.release())
+
+       */
     }
   }
 
@@ -86,12 +131,12 @@ object OpenCvUtils {
     * @param flowSumDir
     */
   private def calcOpticalFlow(
-    frames: Vector[Mat],
-    flow3dDir: String,
-    flow2dDir: String,
-    flowSumDir: String,
-    tag: String
-  ): Unit = {
+                               frames: Vector[Mat],
+                               flow3dDir: String,
+                               flow2dDir: String,
+                               flowSumDir: String,
+                               tag: String
+                             ): Unit = {
     val matInit = new Mat(frames.head.rows, frames.head.cols(), CvType.CV_32FC2, new Scalar(0,0,0))
     val (trajectoryFlow, accDist) =
       0.until(frames.length - 1).foldLeft(matInit, 0d) { case ((prevFlow, prevAccDist), idx) =>
