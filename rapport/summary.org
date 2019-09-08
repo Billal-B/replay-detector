@@ -477,9 +477,11 @@ L'algorithme est le suivant :
 Dans cette approche, nous allons chercher les frames qui ont des formes en commun dans la vidéo.
 En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec $2 < t' - t < 90$ (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et t'.
 
-Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Almageed_2008) pour réduire la zone de recherche des logos de début et de fin des replays.
+Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Almageed_2008). 
+Cette algorithme est particulièrement efficace dans notre cas, car les replays provoquent un changement de plan, les logos seront donc toujours à la transition entre deux plan.
+La méthode de cite:Abd_Almageed_2008 va nous permettre réduire la zone de recherche des replays aux frames qui font la transition entre deux plans.
 
-L'idée est de chercher, pour chaque plan, si il existe un autre plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
+L'idée est de chercher, pour chaque transition de plan, si il existe une autre transition de plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
 
 *** Détection de contours
 #+CAPTION: Détection de contours par filtre de Canny
@@ -502,13 +504,12 @@ Les logos sont des séquences d'images incrustés dans la vidéo. En général, 
 #+CAPTION: ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) label:mosaic
 #+ATTR_LATEX: :width 16cm
 [[file:mosaique_add.png]]
-Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque plan avec chaque frame des plans voisins.
+Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque transition de plan avec chaque frame des transitions voisines.
 
-C'est pourquoi, pour chaque shot deux images sont générées.
+C'est pourquoi, pour chaque transition de plan, deux images sont générées.
 
-Chaque image est de dimension I * I * width * height où I est le nombre de frames dans le shot.
+Chaque image est de dimension I² * width * height où I est le nombre de frames dans la transition. Chaque "case" dans l'image va correspondre aux contours d'une frame dans la transition de plan.
 
-Ces images sont des matrices d'images qui vont permettre de comparer rapidement deux shot.
 La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.
 
 Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).
@@ -660,7 +661,11 @@ Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en
 #+CAPTION: Résultats obtenus label:res-match-contour
 #+ATTR_LATEX: :width 17cm
 [[file:res_match_contour.png]]
-Les résultats obtenus sont présentés en ref:res-match-contour.
+Les résultats obtenus sont présentés en ref:res-match-contour. Chaque ligne correspond à une configuration de paramètres différente, les paramètres sont :
+- With delete BG : lors de la création de la mosaique de plan, nous faisons pour chaque frame de la mosaique la soustraction entre ce frame et les 3 frames au début du plan. Nous faisons ceci afin de supprimer les pixels fixes dans le plan qui sont probablement du bruit pour cette approche, comme par exemple, les lignes du terrain, les cages du gardien ou le logo de la chaine. En effet, les frames avec des pixels fixes vont avoir beaucoup de contours en commun et risque donc d'être détectées comme logo sans l'être.
+- dilate contour : les pixels des contours sont dilatés (de 2 pixels)
+- gauss contour/mosaic : un filtre gaussien est appliqué sur la matrice résultant du & binaire entre deux mosaiques de contours de plan.
+- saveWindowSize relative to fps : la taille des mosaiques est relative au nombre d'images par seconde dans la vidéo
 
 Après avoir fait plusieurs essais avec des paramètres différents à chaque fois, nous ne sommes pas parvenus à trouver une combinaison telle qu'il n'y ait aucun faux positif et aucun faux négatif.
 Néanmoins, si le seuil d'acceptance des logos est assez élevé, l'algorithme ne retourne aucun faux positif. 

@@ -48,12 +48,14 @@ def main():
     print(str(sorted_not_logos))
     s_logos = set(sorted_logos)
     s_not_logos = set(sorted_not_logos)
-    print("LOGO RATE", str(1 - len(s_logos.difference(gold_logo)) / len(gold_logo)))
+    print("***************************")
+    print("LOGO RECALL", len(s_logos.intersection(gold_logo)) / len(gold_logo))
+    print("LOGO PRECISION", len(s_logos.intersection(gold_logo)) / len(s_logos))
     print("ERROR : ", str(s_logos.difference(gold_logo)))
     print("***********************************")
-    print("NOT LOGO RATE", str(1 - len(s_not_logos.difference(gold_non_logo)) / len(gold_non_logo)))
+    print("NOT LOGO RECALL", len(s_not_logos.intersection(gold_non_logo)) / len(gold_non_logo))
+    print("NOT LOGO PRECISION", len(s_not_logos.intersection(gold_non_logo)) / len(s_not_logos))
     print("ERROR : ", str(s_not_logos.difference(gold_non_logo)))
-
 
 
 def get_all_sequences_in_memory(seq_length, image_shape, sequence_folders, folder):
