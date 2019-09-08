@@ -6,7 +6,10 @@ from models import ResearchModels
 from data import DataSet
 import time
 import os.path
-
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+import os
 
 def plot_history(history, result_dir):
     plt.plot(history.history['acc'], marker='.')
@@ -98,7 +101,7 @@ def train(data_type, seq_length, model, saved_model=None,
     # Fit!
     if load_to_memory:
         # Use standard fit.
-        rm.model.fit(
+        history = rm.model.fit(
             X,
             y,
             batch_size=batch_size,
@@ -108,7 +111,7 @@ def train(data_type, seq_length, model, saved_model=None,
             epochs=nb_epoch)
     else:
         # Use fit generator.
-        rm.model.fit_generator(
+        history = rm.model.fit_generator(
             generator=generator,
             steps_per_epoch=steps_per_epoch,
             epochs=nb_epoch,
@@ -117,6 +120,8 @@ def train(data_type, seq_length, model, saved_model=None,
             validation_data=val_generator,
             validation_steps=40,
             workers=4)
+    plot_history(history, '.')
+    save_history(history, '.')
     rm.model.save(str(timestamp) + "_replay_model.h5")
 
 def main():

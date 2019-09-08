@@ -11,9 +11,11 @@ from processor import process_image
 def main():
     model = 'c3d'
     num_classes = 2
-    seq_length = 20
-    net_type = "psg_mon/conv3d"
-    gold_file = "psg_mon"
+    seq_length = 19
+    video_name = "psg_stras"
+    net_name = "flow3d"
+    net_type = video_name + "/" + net_name
+    gold_file = video_name
     if model in ['conv_3d', 'c3d', 'lrcn']:
         data_type = 'images'
         image_shape = (80, 80, 3)
@@ -25,7 +27,7 @@ def main():
     sequence_folders = get_sequence_folders(net_type)
     names_and_sequences = get_all_sequences_in_memory(seq_length, image_shape, sequence_folders, net_type)
     print("Loading the model...")
-    model = load_model('model/conv3d_model.h5')
+    model = load_model('model/'+ net_name+ '_model.h5')
     print("Done loading the model.")
     logos = []
     not_logos = []
