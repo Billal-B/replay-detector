@@ -6,6 +6,7 @@ target
 project/target
 shot
 logs
+Dataset/*
 lib/opencv-342.jar
 lib/opencv_java342.dll
 lib/opencv_ffmpeg342_64.dll

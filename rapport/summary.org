@@ -114,7 +114,7 @@ La distance utilisée pour comparer le hash des images est la distance de Wasser
 
 
 *** Résultats 
-#+CAPTION: Performance sur la tâche de détection de replay :label:mean-shift-res
+#+CAPTION: Performance sur la tâche de détection de replay label:mean-shift-res
 [[file:mean_shift_res.png]]
 Les résultats obtenus par les auteurs sont présentés dans la Figure ref:mean-shift-res. 
 Ceux-ci sont bons, mais l'ensemble de test n'est pas assez représentatif (seulement quatres vidéos).
@@ -581,10 +581,10 @@ Pour mettre en place cette architecture, nous avons créé une image Docker engl
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
 
 *** Kubernetes
-#+CAPTION: Cluster Kubernetes sur GCP
+#+CAPTION: Cluster Kubernetes sur GCP label:cluster-kubernetes
 #+ATTR_LATEX: :width 10cm
 [[file:kubernetes_pods.png]]
-Un cluster Kubernetes avec un load balancer va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
+Un cluster Kubernetes ref:cluster-kubernetes avec un load balancer va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
 Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
 ** Données collectées
 Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
@@ -689,10 +689,10 @@ Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, el
 
 #+LATEX: \newpage
 ** Résultats pour l'approche par apprentissage profond
-#+CAPTION: Résultats obtenus par les réseaux 
+#+CAPTION: Résultats obtenus par les réseaux label:conv-res
 #+ATTR_LATEX: :width 15cm
 [[file:res_conv.png]]
-Les résultats obtenus par les réseaux sont moins bons que ce que nous espérions. 
+Les résultats obtenus par les réseaux sont présentés en ref:conv-res. Ils sont moins bons que ce que nous espérions. 
 Le réseau à convolution 3D sur des séquences d'images obtient des résultats satisfaisant sur la vidéo de Premier League (PL) avec 65% de précision et 40% de rappel; mais de mauvais résultats sur les autres vidéos.
 Le réseau à convolution 3D sur des séquences d'images de flux optique obtient de mauvais résultats sur toutes les vidéos; le résultat obtenu pour la vidéo de Liga est néanmoins intéressant. En effet, avec une précision de 88%, il semblerait que le réseau est commencé à apprendre à reconnaître les séquences non-logo.
 
