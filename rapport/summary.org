@@ -24,7 +24,7 @@ L’équipe travaillant sur ce projet est composée de :
 + Zoltan Tarsoly : Test Automation Engineer
 + Youva Ammaouche : Assistant chef de projet
 
-En tant que développeur back end, je suis chargé de rajouter de nouvelles fonctionnalitées au DAM.
+En tant que développeur back end, je suis chargé de rajouter de nouvelles fonctionnalités au DAM.
 L'une des missions qui m'a été affectée est la détection des replays dans les vidéos de sport.
 Cette fonctionnalité permettra de fournir à nos clients un résumé automatique des vidéos qu'ils publient sur notre plateforme.
 
@@ -33,7 +33,7 @@ Cette fonctionnalité permettra de fournir à nos clients un résumé automatiqu
 Au cours des dernières années, les techniques d'apprentissage automatique ont joué un rôle de plus en plus important dans les systèmes de reconnaissance automatique.
 Les avancements dans le domaine de l'apprentissage profond et l'accès à un volume massif de données ont permi de mettre en place des solutions de plus en plus performantes.
 En particulier, l'adoption globale des téléphones intelligents et de leur caméra intégrée a accru de manière exponentielle le nombre de vidéos disponibles sur Internet, à tel point qu'il est devenu impossible pour l'humain d'ingérer manuellement le contenu de toutes les vidéos disponibles sur la toile.
-Dans cet étude, nous nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
+Dans cette étude, nous nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
 Plus particulièrement, nous focalisons notre recherche sur les vidéos de football.
 
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.
@@ -41,7 +41,7 @@ Dans ces vidéos, notre objectif va être de parvenir à identifier les replays;
 *Qu'est-ce qu'un replay ?* Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
 En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action. Un replay est une annotation humaine sur une vidéo.
-Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
+Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénalty.
 
 *Caractéristique des replays* Les replays sont introduits et se terminent par un logo (cite:Hao_Pan_2002).
 Ces logos ont en général une apparence qui se démarque facilement des autres images dans la vidéo.
@@ -51,7 +51,7 @@ C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détect
 
 L'objectif de notre recherche est de créer un système robuste de détection de replays dans les vidéos de football.
 Dans un premier temps, nous dressons un inventaire de l'état de l'art concernant la détection de replays, puis nous présentons des méthodes par apprentissage profond pour la reconnaissance d'action dans les vidéos.
-Une fois les bases théoriques posées, nous proposons quatres approches :
+Une fois les bases théoriques posées, nous proposons quatre approches :
 - la première utilise l'algorithme ORB cite:Rublee_2011 pour extraire des caractéristiques à partir des images de la vidéo et K-Means à partir de ces caractéristiques
 - dans la seconde, nous utilisons la détection de contours pour trouver les replays
 - dans la troisième, nous nous servons d'un réseau à convolution 3D pour classifier des séquences d'images afin d'apprendre à différencier les séquences d'images logo et les séquences d'images non logo
@@ -84,7 +84,7 @@ Une fois le cluster de logos déterminé, le /logo template/ est la frame m qui 
 [[file:robust_calc_dist.JPG]]
 
 *** Recherche des logo
-Une fois que le logo template est déterminé, chaque logo trouvé en précédemment va être comparé avec le logo template.
+Une fois que le logo template est déterminé, chaque logo trouvé précédemment va être comparé avec le logo template.
 La mesure de comparaison est la distance (figure ref:calc-dist) qu'il y a entre le frame et le template dans le cluster.
 Tous les frames qui ont une distance inférieure à un certain threshold sont considérés comme des logos.
 
@@ -99,8 +99,8 @@ Après avoir implémenté cette méthode, nous avons constaté que celle-ci n'es
 Cette approche est trop dépendant de la luminance et elle ne parvient pas à détecter les logos peu lumineux.
 De plus, les bases mathématiques (notamment la manière de choisir le cluster et la mesure de distance) sont un peu douteuses.
 Enfin, celle-ci dépend trop du paramètre "seuil de luminance" affectant les logos détectés.
-Le seuil de luminance fournis par les auteurs ne produit pas de bons résultats sur toutes les vidéos.
-Nous n'avons pas réussi à trouver une valeur pour le seuil de luminance qui obtienne universellemnt de bons résultats.
+Le seuil de luminance fourni par les auteurs ne produit pas de bons résultats sur toutes les vidéos.
+Nous n'avons pas réussi à trouver une valeur pour le seuil de luminance qui obtienne universellement de bons résultats.
 Un seuil à 100000 détecte les logos de Ligue 1 mais pas les logos de Liga.
 Un seuil de 75000 détecte les logos de Liga et de Ligue 1, mais laisse passer trop de faux positifs.
 Les logos de Premier League quant à eux ne sont pas tous détectés avec un seuil à 50000, alors que ce seuil accepte un grand nombre de faux positifs.
@@ -109,7 +109,7 @@ Pour conclure, cette approche n'est pas celle qui va nous permettre de mettre en
 
 ** Mean Shift Based video Segment Representation And Applications To Replay Detection
 Dans cet article cite:Ling_Yu_Duan, les auteurs présentent une méthode permettant de détecter les replays.
-L'idée est d'apprendre une base de représentation compressée de logos avec une méthode comme le spectral hashing (cite:NIPS2008_3383), puis de se servir de cette base de données pour trouver les logo au début à la fin de replays.
+L'idée est d'apprendre une base de représentation compressée de logos avec une méthode comme le spectral hashing (cite:NIPS2008_3383), puis de se servir de cette base de données pour trouver les logos au début à la fin de replays.
 *** Algorithme
 #+BEGIN_SRC
 L = []
@@ -138,7 +138,6 @@ Les avantages des représentations hashées pour les images sont les suivants :
 - chercher un hash dans une table de hachage est rapide (chercher un frame dans une base de données)
 Pour ces raisons, cette approche est tout à fait adaptée à la reconnaissance de logo.
 
-#+LATEX: \newpage
 ** Automatic summarization of soccer highlights using audio-visual descriptors
 Cette approche cite:Ravent_s_2015 ressemble à l'approche par luminance (cite:xu11_robus_replay_detec_algor_soccer_video), mais introduit néanmoins une différence importante : un pré-traitement sur la vidéo pour en extraire les plans.
 *** Algorithme
@@ -155,9 +154,10 @@ L = Pour chaque shot S_i:
 #+END_SRC
 
 *** Apport de l'article
-Cette méthode est trop semblable à l’approche “Robust Replay Detection” qui ne répond pas à nos besoin, cette approche ne fonctionnera pas dans notre cas (la luminance n’est pas un critère assez discriminant pour la reconnaissance de logo).
+Cette méthode est trop semblable à l’approche “Robust Replay Detection” qui ne répond pas à nos besoins, cette approche ne fonctionnera pas dans notre cas (la luminance n’est pas un critère assez discriminant pour la reconnaissance de logo).
 Néanmoins, l’idée de découper la vidéo en “shot” (en plan) est intéressante et nous nous en servons par la suite.
 
+#+LATEX: \newpage
 * Apprentissage automatique : les bases théoriques
 Dans notre recherche, nous allons aborder plusieurs types de réseaux d'apprentissage automatique.
 Nous allons présenter dans cette partie les principes fondamentaux à la bonne compréhension de ces derniers.
@@ -180,7 +180,7 @@ Ces portes vont permettre de stocker l'information apprise par le réseau à tra
 À la différence des RNN classiques, les LSTM sont capables d'oublier de l'information grâce à leur *leaky unit* afin d'éviter une explosion ou une disparition du gradient.
 Par exemple, si nous voulons entraîner un LSTM pour qu'il puisse reconnaître une action courte dans une vidéo, ce dernier n'a pas besoin d'enregistrer toutes l'information acquise depuis le premier frame, il lui suffit de connaître un voisinage de quelques frames.
 La puissance de ces réseaux à portes est que c'est le réseau qui va apprendre à décider quand vider son état interne.
-Concrétement, cela va leur permettre de pouvoir capturer des dépendances à long terme de manière bien plus efficace que les RNN classiques.
+Concrètement, cela va leur permettre de pouvoir capturer des dépendances à long terme de manière bien plus efficace que les RNN classiques.
 
 ** CNN
 #+CAPTION: Opération de convolution label:convolution
@@ -199,25 +199,25 @@ La couche de convolution est généralement composée de la fonction de convolut
 [[file:sparse_vs_dense.png]]
 
 À la différence des réseaux classiques où toutes les sorties intéragissent avec toutes les entrées, les réseaux à convolution ont des *intéractions parcimonieuses*. 
-C'est à dire que la taille du noyau (donc de l'intéraction avec l'entrée), est plus petite que la taille de l'entrée.
+C'est-à-dire que la taille du noyau (donc de l'intéraction avec l'entrée), est plus petite que la taille de l'entrée.
 Une image a une dimension en entrée de /c*l*w/ où /c/ est le nombre de canaux de l'image (un seul pour une image en noir et blanc, trois pour une image en couleur), l la largeur en pixel de l'image et w la longueur en pixel de l'image.
-Une petite image couleur de dimension 100*100 aura 100*100*3 paramètres en entrée, ce qui provoque une explosion combinatoire avec les réseaux classiques qui n'ont pas d'intéraction parcimonieuse car il faudra une connection entre chaque paramètre d'entrée et une entrée du réseau.
+Une petite image couleur de dimension 100*100 aura 100*100*3 paramètres en entrée, ce qui provoque une explosion combinatoire avec les réseaux classiques qui n'ont pas d'intéraction parcimonieuse car il faudra une connexion entre chaque paramètre d'entrée et une entrée du réseau.
 Un réseau de convolution, quant à lui, aura un noyau d'une dizaine ou d'une centaine de pixel qui parcourt l'image à la recherche de caractéristiques significatives comme des contours.
 Cela signifie que l'intéraction parcimonieuse permet aux CNN de stocker moins de paramètres que les autres types de réseau. 
 Par conséquent, ils ont donc ont besoin de moins de mémoire (pour la même tâche) et ont une meilleure efficacité statistique.
 C'est l'une des raisons faisant que les réseaux à convolution sont très efficaces pour le traitement d'image.
 
 *** Partage de paramètres
-Dans un réseau classique, un poid (un paramètre) est associé à chaque paramètre d'entrée et ne sert qu'une fois.
+Dans un réseau classique, un poids (un paramètre) est associé à chaque paramètre d'entrée et ne sert qu'une fois.
 Tandis que dans un réseau convolutif, le noyau utilisé par une couche de convolution est le même sur toutes les matrices représentant l'entrée. 
-Grâce à ce *partage des paramètres*, il n'y a que les poids du noyau à apprendre au lieu d'un poid pour chaque neurone d'entrée.
+Grâce à ce *partage des paramètres*, il n'y a que les poids du noyau à apprendre au lieu d'un poids pour chaque neurone d'entrée.
 De plus, la taille du noyau est en général largement inférieure à celle de la couche d'entrée.
 
 *** Représentations équivariantes
 Une fonction est *équivariante* si, quand l'entrée change, la sortie change de la même manière.
-En terme mathématique, cela signifique que si $y = f(x)$ alors $g(y) = g(f(x))$. 
+En terme mathématique, cela signifie que si $y = f(x)$ alors $g(y) = g(f(x))$. 
 Les réseaux convolutifs sont équivariants à la translation. 
-Dans le cas de l'image, celà signifie que le déplacement des pixels n'a pas d'influence sur le réseau.
+Dans le cas de l'image, cela veut dire que le déplacement des pixels n'a pas d'influence sur le réseau.
 
 *** Pooling
 #+CAPTION: Pooling & invariance label:pooling
@@ -262,12 +262,12 @@ Les auteurs appellent leur approche "optical flow stacking" (empilement de flux 
 
 Dans celle-ci, ils utilisent le flux optique pour représenter le mouvement des objets entre des frames consécutifs.
 
-Ils définissent aussi un hyperparamètre L qui définit la distance maximum entre deux frames pour laquel il faut calculer le flux optique.
+Ils définissent aussi un hyperparamètre L qui définit la distance maximum entre deux frames pour laquelle il faut calculer le flux optique.
 Par exemple, si L=5, alors pour le frame t, il faudra calculer le flux entre le frame t et le frame t+1; entre t+1 et t+2; etc... jusqu'à t+4 et t+5.
 Le flux optique entre deux frames est une matrice de dimension 2, il peut donc être sauvegardé sous forme d'image.
 Ainsi, des images représentant le flux optique entre les différents frames de la vidéo vont être générées.
 
-Chacunes de ces images servira d'entrée au CNN (classifieur temporel).
+Chacune de ces images servira d'entrée au CNN (classifieur temporel).
 *** Méthode d'évalutation et résultats obtenus
 #+CAPTION: Résultats obtenus par l'approche Two-stream model label:two-stream-res
 #+ATTR_LATEX: :width 13cm
@@ -287,7 +287,7 @@ Nous pouvons voir que leur approche two-stream avec fusion SVM est la plus effic
 Ce qui est le plus intéressant dans cet article, c'est l'amélioration qu'apporte l'ajout de la composante temporelle.
 En effet, le classifieur d'image simple (spatial) n'a que 73.0% (UCF-101) et 40.5% (HMBD-51), tandis que le classifieur qui prend en compte l'image et la temporalité (two-stream model) atteint *88.0%* et 59.4%; ce qui est une nette amélioration.
 
-Cet article nous a renforcé dans l'hypothèse qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'images indépendantes, mais comme une suite de séquence avec un lien entre chaque élément de la séquence. La temporalité a une très grande importance pour l'analyse de vidéos, et le flux optique est une méthode efficace pour modéliser le déplacement des objets entre deux instants.
+Cet article nous a renforcés dans l'hypothèse qu'il est nécessaire d'étudier une vidéo non pas comme une suite d'images indépendantes, mais comme une suite de séquences avec un lien entre chaque élément de la séquence. La temporalité a une très grande importance pour l'analyse de vidéos, et le flux optique est une méthode efficace pour modéliser le déplacement des objets entre deux instants.
 
 ** Learning Spatiotemporal Features with 3D Convolutional Networks
 Dans cet article cite:Tran_2015, les auteurs proposent une approche pour apprendre les caractéristiques spatio-temporelles dans les vidéos grâce à un réseau de neurones à convolution.
@@ -295,7 +295,7 @@ Dans cet article cite:Tran_2015, les auteurs proposent une approche pour apprend
 Ils font l'hypothèse qu'un réseau avec une couche de convolution 3D qui prend en entrée une séquence d'images est capable d'apprendre efficacement les mouvements des objets dans les vidéos.
 
 L'objectif est d'apprendre des caractéristiques qui soient :
-- génériques : c'est à dire la capacité à représenter différents types de vidéos
+- génériques : c'est-à-dire la capacité à représenter différents types de vidéos
 - compactes : afin de pouvoir stocker un grand nombre de ces caractéristiques
 - efficace (computationnellement): pour traiter les vidéos en temps réel
 - simples : afin de fonctionner même avec les modèles simples (comme un classifieur linéaire)
@@ -325,7 +325,7 @@ L'entraînement s'arrête après 16 epoch.
 
 Après l'entraînement, le réseau peut être utilisé comme un extracteur de caractéristiques pour des tâches d'analyse vidéo.
 Pour se faire, la vidéo va être découpée en des clips de 16 frames (avec 8 frames de chevauchement entre deux clips consécutifs).
-Ensuite, chacun de ces clips va être passés au réseau et l'avant dernière couche complètement connectée (fc6) va contenir les caractéristiques du clip.
+Ensuite, chacun de ces clips va être passé au réseau et l'avant dernière couche complètement connectée (fc6) va contenir les caractéristiques du clip.
 
 *Qu'est-ce que ce réseau apprend ?* Ce réseau apprend à se focaliser sur l'image des premiers frames, et à traquer leur déplacement dans les frames suivants.
 
@@ -345,7 +345,7 @@ De plus, cette approche est élégante car elle fonctionne sans ajout artificiel
 Dans cet article cite:Joe_Yue_Hei_Ng_2015, les auteurs proposent d'utiliser une architecture hybride à base de CNN et de RNN (LSTM) pour l'analyse vidéo.
 Leur objectif est d'apprendre des dépendances à long terme dans les vidéos, d'où l'utilisation d'un LSTM.
 Les CNN sont des réseaux particulièrement efficaces pour analyser les frames des vidéos, c'est le CNN qui va se charger de la composante spatiale de la vidéo.
-Les LSTM va servir à apprendre la composante temporelle.
+Le LSTM va servir à apprendre la composante temporelle.
 
 *** Approche
 L'objectif des auteurs est d'apprendre des dépendances à long terme dans les vidéos.
@@ -355,7 +355,7 @@ Les auteurs font l'hypothèse que tous les frames dans la vidéo ne sont pas uti
 Néanmoins, ne regarder qu'une seule image par seconde dans la vidéo ne préserve pas le déplacement des pixels entre l'instant t et l'instant t + 1 (en seconde) et donc l'information du mouvement des objets. 
 Pour palier à ce problème, le flux optique (de la même manière que cite:DBLP:journals/corr/SimonyanZ14) est calculé entre les frames adjacents.
 Ainsi, l'information temporelle et l'information spatialle sont préservées, tout en ne traitant qu'une seule image par seconde, ce qui réduit beaucoup le coût de calcul.
-Pour apprendre les dépendances qu'il y a entre les frames, un LSTM est utilisé; celui-ci va traiter les vidéo comme des séquences d'images et va apprendre à prédire la classe de la vidéo en fonction de ces séquences.
+Pour apprendre les dépendances qu'il y a entre les frames, un LSTM est utilisé; celui-ci va traiter les vidéos comme des séquences d'images et va apprendre à prédire la classe de la vidéo en fonction de ces séquences.
 *** Architecture
 #+CAPTION: Architecture du LSTM label:arch-lstm
 #+ATTR_LATEX: :width 8cm
@@ -381,7 +381,7 @@ Nous pouvons voir que leur approche obtient les meilleurs résultats (88.6% cont
 Ces résultats sont intéressants car à la différence des autres approches, celle-ci est capable de prédire une classe pour des morceaux de vidéos pouvant aller jusqu'à deux minutes (contre quelques secondes pour les autres). 
 De plus, les meilleurs résultats sont là aussi obtenus en utilisant le flux optique, confirmant l'hypothèse faite par cite:DBLP:journals/corr/SimonyanZ14 que ce dernier est nécessaire pour le traitement des vidéos.
 
-Dans notre cas, cette approche n'est pas la plus adaptée. En effet, nous souhaitons reconnaitre les logos dans les vidéos, or un logo ne dure pas plus longtemps que quelques secondes et les dépendances à long-terme que le LSTM va apprendre ne nous intéressent pas.
+Dans notre cas, cette approche n'est pas la plus adaptée. En effet, nous souhaitons reconnaître les logos dans les vidéos, or un logo ne dure pas plus longtemps que quelques secondes et les dépendances à long-terme que le LSTM va apprendre ne nous intéressent pas.
 Néanmoins, une variante de celle-ci où le LSTM reçoit en entrée une séquence de frames consécutifs (et pas une séquence formée d'un frame par seconde) pourrait avoir de bons résultats pour la tâche de détection de logos.
 
 #+LATEX: \newpage
@@ -406,7 +406,7 @@ Ensuite, nous présentons deux approches par apprentissage profond :
 - la seconde utilise un réseau à convolution 3D sur des séquences d'images représentant le flux optique des objets dans la vidéo
 
 ** Détection des plans
-Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logos pouvant se trouver au début et à la fin des replays.
+Les approches que nous proposons itèrent sur tous les frames de la vidéo, à la recherche des logos pouvant se trouver au début et à la fin des replays.
 Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche à tous les frames qui sont entre deux plans.
 
 C'est pourquoi nous allons chercher une méthode permettant de détecter les changements de plan dans les vidéos.
@@ -421,12 +421,12 @@ Ensuite, une matrice M de dimension N * L, représentant une fenêtre de N frame
 L'algorithme SVD (singular value decomposition) va être appliqué sur M.  $M = UWV$, où W est la matrice de valeurs singulières.
 
 Les diagonales de la matrice W comportent des poids S ordonnés de manière décroissante.
-Le premier poid S_1 est le poid maximal. Ces poids représentent l'information contenue dans le vecteur V.
+Le premier poids S_1 est le poid maximal. Ces poids représentent l'information contenue dans le vecteur V.
 
 Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre d'éléments s dans S tel que s/S1 > threshold. Le rang va être calculé pour chaque fenêtre de frames dans la vidéo.
 
 Si le rang d'une fenêtre est plus que grand que le rang de la fenêtre avant elle, alors le contenu visuel de la fenêtre est différent de la fenêtre précédente.
-À l'inverse, si le rang est inférieure à la fenêtre précédente, alors le contenu visuel se stabilise. S'il est de 1, alors c'est stable.
+À l'inverse, si le rang est inférieur à la fenêtre précédente, alors le contenu visuel se stabilise. S'il est de 1, alors c'est stable.
 
 Le début d'un frame est celui qui maximise le rang parmi les fenêtres environnantes.
 
@@ -435,9 +435,9 @@ Cette méthode pour trouver les plans dans une vidéo est très efficace, et nou
 En effet, avant de segmenter la vidéo en plan, nous comparions  N frames , où N peut être aussi grand que 400000 (pour des vidéos de 120 minutes à 60 fps).
 Il est impensable d’utiliser un algorithme en O(N²), par exemple en comparant tous les frames entre eux, avec un N aussi grand.
 
-Après avoir segmenter la vidéo en plan, nous obtenons un N’ au alentours de 2000 pour une vidéo de 120 minutes à 60 fps. 
+Après avoir segmenté la vidéo en plan, nous obtenons un N’ aux alentours de 2000 pour une vidéo de 120 minutes à 60 fps. 
 Nous pouvons donc nous permettre d’utiliser des algorithmes plus complexes que sans la segmentation en plan.
-De plus, la segmentation en plan réduit le champs de recherche des frames logo, et donc le nombre de faux positifs.
+De plus, la segmentation en plan réduit le champ de recherche des frames logo, et donc le nombre de faux positifs.
 
 ** Flux optique
 [[file:optical_flow_2.png]]
@@ -446,12 +446,12 @@ Le flux optique est une matrice X * Y * D, où X et Y sont l'axe des absisses et
 
 De la même manière que pour cite:wang11_action, nous allons traquer le déplacement des objets grâce au flux optique.
 Il existe deux types d'algorithme de calcul du flux optique :
-- sparse/creux : seulement les déplacements de certains points d'intéret vont être traqués (méthode de Lucas-Kanade)
-- dense : le déplacement de tous les points dans l'image vont être traqués (algorithme de Gunner Farneback)
-Le calcul du flux optique dense est plus couteux mais à l'avantage de ne pas nécessiter de déterminer les points d'intéret dans l'image avant de calculer le flux optique.
+- sparse/creux : seulement le déplacement de certains points d'intérêt va être traqué (méthode de Lucas-Kanade)
+- dense : le déplacement de tous les points dans l'image va être traqué (algorithme de Gunner Farneback)
+Le calcul du flux optique dense est plus couteux mais à l'avantage de ne pas nécessiter de déterminer les points d'intérêt dans l'image avant de calculer le flux optique.
 
 ** ORB et K-means 
-Dans cette approche, nous cherchons à reconnaître les logos dans les vidéo.
+Dans cette approche, nous cherchons à reconnaître les logos dans les vidéos.
 Pour ce faire, nous optons pour une approche de clustering. 
 L'idée est de séparer la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
 
@@ -459,7 +459,7 @@ Il existe plusieurs manières de représenter une image, par exemple :
 - une matrice w * l * c où c est le nombre de canal (3 pour une image couleur, 1 pour une image en noir et blanc), w et l la largeur et la longueur (resp.) de l'image en pixel
 - un histogramme des couleurs RGB
 - un histogramme HSV
-Néanmoins, aucune de ces méthodes ne permet de vectoriser l'image de tel sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.
+Néanmoins, aucune de ces méthodes ne permet de vectoriser l'image de telle sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.
 
 De plus, dans notre cas, nous souhaitons regrouper non pas des frames (images) mais des plans (séquences d'images).
 
@@ -467,15 +467,15 @@ L'algorithme KMeans permet de regrouper les objets similaires en fonction de leu
 Dans notre cas, il va nous permettre de créer deux groupes d'images : logo / non logo.
 L'avantage de KMeans est qu'il est est rapide et efficace dans la plupart des cas.
 
-Pour fonctionner, KMeans a besoin que les objets que l'on souhaite séparer en groupe soit sous forme de vecteurs et que ces vecteurs soient discriminants. C'est à dire qu'un frame logo ne doit pas être proche dans l'espace d'un frame non-logo.
+Pour fonctionner, KMeans a besoin que les objets que l'on souhaite séparer en groupe soient sous forme de vecteurs et que ces vecteurs soient discriminants. C'est-à-dire qu'un frame logo ne doit pas être proche dans l'espace d'un frame non-logo.
 
-Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques à partir pour chaque plan dans la vidéo. Cette algorithme calcule un vecteur de dimension 1 à partir d'une image; chaque élément i du vecteur est à un point (donc à deux coordonnées x_i et y_i) correspondant à un point d'intéret dans l'image.
+Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques à partir pour chaque plan dans la vidéo. Cet algorithme calcule un vecteur de dimension 1 à partir d'une image; chaque élément i du vecteur est à un point (donc à deux coordonnées x_i et y_i) correspondant à un point d'intérêt dans l'image.
 
 *** Première expérimentation : 1 frame par shot
 #+CAPTION: Caractéristiques extraites par ORB (en vert), pour une seule image par plan
 #+ATTR_LATEX: :width 8cm
 [[file:orb_simple_res.JPG]]
-Ici, nous ne récupérons les caractéristiques que d'une seule image par plan. L'image pour laquelle nous extrayons les caractèristiques est la dernière frame de la séquence, car c'est la dernière image faisant la transition entre deux plans (et dans le cas des logos, c'est dans celle-ci que sa forme visuelle est la plus nette).
+Ici, nous ne récupérons les caractéristiques que d'une seule image par plan. L'image pour laquelle nous extrayons les caractéristiques est la dernière frame de la séquence, car c'est la dernière image faisant la transition entre deux plans (et dans le cas des logos, c'est dans celle-ci que sa forme visuelle est la plus nette).
 
 L'algorithme est le suivant :
 #+BEGIN_SRC
@@ -488,7 +488,7 @@ L'algorithme est le suivant :
 #+END_SRC
 
 *** Deuxième expérimentation : 1 fenêtre de frame par shot:
-#+CAPTION: Caractéristiques extraites par ORB (en vert) pour un plan (aggrégat des caractéristiques de chaque image dans le plan) label:orb-window
+#+CAPTION: Caractéristiques extraites par ORB (en vert) pour un plan (agrégat des caractéristiques de chaque image dans le plan) label:orb-window
 #+ATTR_LATEX: :width 8cm
 file:akaze_window_res.jpg
 L'approche précédente ne récupère qu'une seule image par plan. 
@@ -510,7 +510,7 @@ Dans cette approche, nous allons chercher les frames qui ont des formes en commu
 En effet, d'après l'hypothèse III, il est fort probable que si un frame à l'instant t a beaucoup de formes en commun avec un frame à l'instant t', avec $2 < t' - t < 90$ (hypothèse V), alors il y a un logo à l'instant t et un logo à l'instant t', et un replay entre t et t'.
 
 Dans cette méthode, nous utilisons là aussi le découpage en plan (cite:Abd_Almageed_2008). 
-Cette algorithme est particulièrement efficace dans notre cas, car les replays provoquent un changement de plan, les logos seront donc toujours à la transition entre deux plan. Cette méthode va nous permettre réduire la zone de recherche des logos aux frames qui font la transition entre deux plans.
+Cet algorithme est particulièrement efficace dans notre cas, car les replays provoquent un changement de plan, les logos seront donc toujours à la transition entre deux plans. Cette méthode va nous permettre réduire la zone de recherche des logos aux frames qui font la transition entre deux plans.
 
 L'idée est de chercher, pour chaque transition de plan, s'il existe une autre transition de plan dans son voisinage tel qu'ils ont des contours en commun dans plusieurs de leurs frames.
 
@@ -518,8 +518,8 @@ L'idée est de chercher, pour chaque transition de plan, s'il existe une autre t
 #+CAPTION: Détection de contours par filtre de Canny
 #+ATTR_LATEX: :width 10cm
 [[file:canny_edge2.png]]
-Avec des algorithmes comme le filtre de Canny il est possible de détecter les contours des objets dans une image. Cette algorithme applique une opération de convolution sur les pixels de l'image. La matrice résultant de l'application de cette convolution est l'image décrivant les contours dans l'image source. Cette algorithme est sensible au bruit dans l'image, c'est pourquoi il est nécessaire d'opérer un lissage (par exemple un filtrage Gaussien) avant de l'appliquer.
-L'intéret de la détection de contours est de réduire l'information à traiter dans une image.
+Avec des algorithmes comme le filtre de Canny il est possible de détecter les contours des objets dans une image. Cet algorithme applique une opération de convolution sur les pixels de l'image. La matrice résultant de l'application de cette convolution est l'image décrivant les contours dans l'image source. Cet algorithme est sensible au bruit dans l'image, c'est pourquoi il est nécessaire d'opérer un lissage (par exemple un filtrage Gaussien) avant de l'appliquer.
+L'intérêt de la détection de contours est de réduire l'information à traiter dans une image.
 
 *** Logos et contours
 #+CAPTION: Comparaison des contours entre deux frames logos
@@ -532,15 +532,15 @@ L'intéret de la détection de contours est de réduire l'information à traiter
 Les logos sont des séquences d'images incrustées dans la vidéo. En général, chaque séquence d'image logo est la même au pixel près que les autres séquences logos. Nécessairement, les contours détectés par filtre de Canny seront les mêmes. Pour savoir si deux images ont les mêmes contours, il suffit d'appliquer un ET binaire entre leur contour respectif, et de calculer la longueur des segments dans l'image résultant de ce ET binaire. 
 La longueur des segments nous donne un score, et si ce score est supérieur à un certain seuil, alors nous considérons que les deux images sont des logos.
 
-*** Mosaique de plan
-#+CAPTION: ET binaire (en bas) appliqué à une mosaique de plan à l'instant t (à gauche) et à une mosaique de plan à l'instant t' (à droite) label:mosaic
+*** Mosaïque de plan
+#+CAPTION: ET binaire (en bas) appliqué à une mosaïque de plan à l'instant t (à gauche) et à une mosaïque de plan à l'instant t' (à droite) label:mosaic
 #+ATTR_LATEX: :width 16cm
-[[file:mosaique_add.png]]
+[[file:mosaïque_add.png]]
 Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque transition de plan avec chaque frame des transitions voisines.
 C'est pourquoi, pour chaque transition de plan, deux images sont générées.
 Chaque image est de dimension I² * width * height où I est le nombre de frames dans la transition. Chaque "case" dans l'image va correspondre aux contours d'une frame dans la transition de plan.
 La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.
-Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binaire entre les matrices des mosaiques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).
+Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binaire entre les matrices des mosaïques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).
 
 *** Algorithme
 #+BEGIN_SRC
@@ -548,9 +548,9 @@ Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binai
   1. Redimensionner chaque image
   2. Cropper chaque image (afin de supprimer certains faux positifs)
   3. Détecter le contour (par filtre de Canny)
-- Génération des mosaiques
-- Pour chaque mosaique de plan S_A :
-  - Pour chaque mosaique de plan S_B après S_A :
+- Génération des mosaïques
+- Pour chaque mosaïque de plan S_A :
+  - Pour chaque mosaïque de plan S_B après S_A :
     1. Contour_commun = C_A & C_B
     2. Contours_diff = Détection des contours de Contour_commun
     3. Résultat = Ne garder que les contours qui sont assez longs (|contours| > K)
@@ -562,11 +562,11 @@ Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binai
 #+END_SRC
 
 Notre algorithme est sensible au plan fixe et aux images avec beaucoup de bruits (ces images ont beaucoup de contours détectés par l’algorithme de détection de contours).
-Beaucoup de ces faux-positifs peuvent être filtrer lors du pré-traitement sur les plans, notamment en rajoutant du blur, néanmoins, nous ne sommes pas parvenus à filtrer 100% des faux-positifs.
+Beaucoup de ces faux-positifs peuvent être filtrés lors du pré-traitement sur les plans, notamment en rajoutant du blur, néanmoins, nous ne sommes pas parvenus à filtrer 100% des faux-positifs.
 
 ** Convolution 3D sur des séquences d'images
 Dans cette approche, nous allons implémenter une méthode similaire à cite:Tran_2015.
-L'idée va être d'entrainer un réseau à convolution avec une couche de convolution 3D.
+L'idée va être d'entraîner un réseau à convolution avec une couche de convolution 3D.
 Cette couche va prendre en entrée une séquence d'images et va prédire une classe logo ou non-logo. 
 Pour réduire la zone de recherche, seulement les séquences d'images entre deux plans (détectées avec cite:Abd_Almageed_2008) seront traitées.
 Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images labellisées (logo/non-logo).
@@ -574,7 +574,7 @@ Comme pour cite:Tran_2015, nous pensons que la convolution 3D va permettre au r�
 
 ** Convolution 3D sur des séquences d'images de flux optique
 Dans cette approche, nous allons entraîner un classifieur de séquences d'images de flux optique.
-Nous pensons que, comme pour l'approche par convolution 3D sur les séquences d'images logos/non-logos, la convolution 3D va permettre d'apprendre le déplacement des objets dans le temps. La troisième dimension du réseau est la temporalité, et les deux autres sont la composante spatialle modélisée par les images de flux optiques.
+Nous pensons que, comme pour l'approche par convolution 3D sur les séquences d'images logos/non-logos, la convolution 3D va permettre d'apprendre le déplacement des objets dans le temps. La troisième dimension du réseau est la temporalité, et les deux autres sont la composante spatiale modélisée par les images de flux optiques.
 Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images de flux optique labellisées (logo/non-logo).
 Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd_Almageed_2008).
 
@@ -591,7 +591,7 @@ Chaque élément du dataset contient :
 L'approche par matching de contours convient tout à fait pour former notre ensemble de données de logo.
 
 En effet, elle est :
-- rapide : une vidéo au format 100x100 de 200000 frames va être traîtée en moins de cinq minutes, et en moyenne une cinquentaine de logos (séquence d'images pendant laquelle un logo apparaît) sont extraits par vidéo
+- rapide : une vidéo au format 100x100 de 200000 frames va être traitée en moins de cinq minutes, et en moyenne une cinquentaine de logos (séquence d'images pendant laquelle un logo apparaît) sont extraits par vidéo
 - précise : il est possible de modifier les paramètres pour que l'algorithme ne renvoie presque pas de faux-positifs (>1%)
 
 ** Obtention des images de flux optiques
@@ -605,7 +605,7 @@ Dans notre cas, les séquences d'images sont de taille 20, donc les séquences d
 [[file:arch_scrap.png]]
 Nous voulons une architecture de scrapping qui soit distribuée.
 En effet, le traitement d'une vidéo prend en moyenne trente minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
-Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui upload les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
+Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui importe les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
 
 *** Kubernetes
@@ -629,15 +629,15 @@ En tout, plus de 200000 images sont générées (8 go sur disque) :
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
 Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015. Le modèle Keras est présenté en ref:keras-c3d
 
-Le ratio ensemble d'entrainement/ensemble de validation est de 0,8.
+Le ratio ensemble d'entraînement/ensemble de validation est de 0,8.
 
-*** Entrainement du classifieur de séquences d'images 
-#+CAPTION: Entrainement du classifieur de séquence d'images
+*** Entraînement du classifieur de séquences d'images 
+#+CAPTION: Entraînement du classifieur de séquence d'images
 #+ATTR_LATEX: :width 10cm
 [[file:conv_train.png]]
 Nous voyons que le minima de la fonction de perte (val_loss) est atteint après 11 epoch (0,46), la précision (val_acc) sur l'ensemble de test après 11 epoch est de 82%.
-*** Entrainement du classifieur de séquences d'images de flux optique
-#+CAPTION: Entrainement du classifieur de séquence d'images de flux optique
+*** Entraînement du classifieur de séquences d'images de flux optique
+#+CAPTION: Entraînement du classifieur de séquence d'images de flux optique
 #+ATTR_LATEX: :width 10cm
 [[file:flow_train.png]]
 Le minima de la fonction de perte (val_loss) est atteint après 7 epoch (0,50), pour une précision (val_acc) de 77% sur l'ensemble de test.
@@ -647,7 +647,7 @@ Le minima de la fonction de perte (val_loss) est atteint après 7 epoch (0,50), 
 Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
 Pour pouvoir donner en entrée ces données aux réseaux, nous avons besoin de transformer les séquences d'images en vecteur de dimension 4 (nombres d'images, largeur de chaque image, longueur de chaque image et nombre de canaux de chaque image) et de faire en sorte de pouvoir donner ces vecteurs en entrée du réseau par batch. La solution a ce problème a été de créer un /generator/ personnalisé qui se charge d'aller lire les séquences dans le bon dossier et de ne charger en mémoire que le nombre nécessaire de séquences (taille du batch).
 *** Avoir une machine assez puissante pour la convolution 3D
-L'entrainement n'est pas possible sur une machine non dotée d'une carte graphique puissante. Pour ça, nous avons du utilisé une machine virtuelle fournie par Google. L'inconvénient de cette solution est le prix. En effet, celle-ci coûte près de 300€ par mois; ce qui ne nous a permis d'essayer autant de modèle qui nous aurions aimé, car l'entrainement est long et donc coûteux.
+L'entraînement n'est pas possible sur une machine non dotée d'une carte graphique puissante. Pour ça, nous avons du utilisé une machine virtuelle fournie par Google. L'inconvénient de cette solution est le prix. En effet, celle-ci coûte près de 300€ par mois; ce qui ne nous a permis d'essayer autant de modèle qui nous aurions aimé, car l'entraînement est long et donc coûteux.
 *** La gestion de l'ensemble de données
 Pour 2611 exemples de séquences logo et 2611 exemples de séquences non-logo, la taille de l'ensemble de données atteint presque les 10go pour plus de 200000 images. Manipuler autant de données est un problème complexe à bien des niveaux : l'importation/exportation des fichiers est longue (surtout le déplacement de ceux-ci entre la machine locale et la machine à distance), la réorganisation du dossier est compliquée en cas d'erreur, les données erronnées (par exemple si le dossier représentant une séquence est vide suite à une défaillance du scrapper) sont difficilement détectables, etc... À titre d'exemple, même sur la machine très puissante fournie par Google, l'extraction de l'archive contenant toutes les images de notre ensemble de données prend plus d'une heure.
 #+LATEX: \newpage
@@ -655,7 +655,7 @@ Pour 2611 exemples de séquences logo et 2611 exemples de séquences non-logo, l
 Dans cette partie, nous allons évaluer chaque approche sur le même ensemble d'évalutation.
 
 ** Procédure d'évaluation
-L'ensemble d'évaluation est le suivant : une vidéo de Ligue 1 de 150k frames, une vidéo de Ligue 1 de 80k frames, une vidéo de Liga et enfin une vidéo de Premier League. Ce sont en tout 3 logos différents (Liga, Ligue 1 et Premier League) qui vont servir à évaluer nos approches.
+L'ensemble d'évaluation est le suivant : une vidéo de Ligue 1 de 150k frames, une vidéo de Ligue 1 de 80k frames, une vidéo de Liga et enfin une vidéo de Premier League. Trois logos différents (Liga, Ligue 1 et Premier League) vont servir à évaluer nos approches.
 Dans toutes les expérimentations, la vidéo est découpée en plans (plan). L'évaluation porte sur le nombre de logos correctement détectés dans la vidéo.
 
 ** Résultats pour ORB
@@ -675,51 +675,51 @@ Néanmoins, il est intéressant de remarquer que les résultats avec la fenêtre
 #+ATTR_LATEX: :width 17cm
 [[file:res_match_contour.png]]
 Les résultats obtenus sont présentés en ref:res-match-contour. Chaque ligne correspond à une configuration de paramètres différente, les paramètres sont :
-- With delete BG : lors de la création de la mosaique de plan, nous faisons pour chaque frame de la mosaique la soustraction entre ce frame et les 3 frames au début du plan. Nous faisons ceci afin de supprimer les pixels fixes dans le plan qui sont probablement du bruit, comme par exemple, les lignes du terrain, les cages du gardien ou le logo de la chaine. En effet, les frames avec des pixels fixes vont avoir beaucoup de contours en commun et risque donc d'être détectées comme logo sans l'être.
+- With delete BG : lors de la création de la mosaïque de plan, nous faisons pour chaque frame de la mosaïque la soustraction entre ce frame et les 3 frames au début du plan. Nous faisons ceci afin de supprimer les pixels fixes dans le plan qui sont probablement du bruit, comme par exemple, les lignes du terrain, les cages du gardien ou le logo de la chaine. En effet, les frames avec des pixels fixes vont avoir beaucoup de contours en commun et risque donc d'être détectées comme logo sans l'être.
 - dilate contour : les pixels des contours sont dilatés (de 2 pixels)
-- gauss contour/mosaic : un filtre gaussien est appliqué sur la matrice résultant du & binaire entre deux mosaiques de contours de plan.
-- saveWindowSize relative to fps : la taille des mosaiques est relative au nombre d'images par seconde dans la vidéo
+- gauss contour/mosaic : un filtre gaussien est appliqué sur la matrice résultant du & binaire entre deux mosaïques de contours de plan.
+- saveWindowSize relative to fps : la taille des mosaïques est relative au nombre d'images par seconde dans la vidéo
 
 Après avoir fait plusieurs essais avec des paramètres différents à chaque fois, nous ne sommes pas parvenus à trouver une combinaison telle qu'il n'y ait aucun faux positif et aucun faux négatif.
 
-Concernant le temps d’exécution, celui-ci est relié presque entièrement à la taille de la vidéo donnée en entrée, ainsi qu’à la taille des mosaiques. Il reste néanmoins faible, et cette approche peut être utilisée en temps réel.
+Concernant le temps d’exécution, celui-ci est relié presque entièrement à la taille de la vidéo donnée en entrée, ainsi qu’à la taille des mosaïques. Il reste néanmoins faible, et cette approche peut être utilisée en temps réel.
 
 Les limitations de notre méthode sont les suivantes :
 - Dans certaines vidéos, il n’y a pas de logo pour les replays (simple fondu)
-- Dans certaines vidéos, les logo de début et fin de replay ne sont pas les mêmes, cette approche ne permet pas de détecter les replays dans ce cas
-- Dans certains vidéos, il y a des logo au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
+- Dans certaines vidéos, les logos de début et fin de replay ne sont pas les mêmes, cette approche ne permet pas de détecter les replays dans ce cas
+- Dans certains vidéos, il y a des logos au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
 
-Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logo de replay.
+Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logos de replay.
 ** Résultats pour l'approche par apprentissage profond
 #+CAPTION: Résultats obtenus par les réseaux label:conv-res
 #+ATTR_LATEX: :width 15cm
 [[file:res_conv.png]]
 Les résultats obtenus par les réseaux sont présentés en ref:conv-res. Ils sont moins bons que ce que nous espérions. 
 Le réseau à convolution 3D sur des séquences d'images obtient des résultats satisfaisant sur la vidéo de Premier League (PL) avec 65% de précision et 40% de rappel; mais de mauvais résultats sur les autres vidéos.
-Le réseau à convolution 3D sur des séquences d'images de flux optique obtient de mauvais résultats sur toutes les vidéos; le résultat obtenu pour la vidéo de Liga est néanmoins intéressant. En effet, avec une précision de 88%, il semblerait que le réseau est commencé à apprendre à reconnaître les séquences non-logo.
+Le réseau à convolution 3D sur des séquences d'images de flux optique obtient de mauvais résultats sur toutes les vidéos; le résultat obtenu pour la vidéo de Liga est néanmoins intéressant. En effet, avec une précision de 88%, il semblerait que le réseau ait commencé à apprendre à reconnaître les séquences non-logo.
 
 Les possibles raisons pouvant expliquer ces mauvais résultats sont les suivantes :
-- les données d'entrainement ne sont pas assez représentatives (I) : l'ensemble d'entrainement est constitué de 50% de séquences logos et de 50% de séquences non logos alors que dans les faits, seulement 5% en moyenne des séquences dans les matchs de football sont des séquences logos. Nous avons procédé ainsi pour avoir un ensemble de données plus petit que si nous avions gardé toutes les séquences non-logos (le dataset aurait été près de 5 fois plus volumineux)
--  les données d'entrainement ne sont pas assez représentatives (II) : la majorité des séquences logos (~90%) que nous avons dans l'ensemble d'entrainement sont des logos de Liga. Ceci est du au fait que la plupart des vidéos de match de football entier auquel nous avons pu accéder sont des vidéos de Liga.
-- les données d'entrainement ne sont pas d'assez bonne qualité : certaines vidéos sont de mauvaise qualité et même dans certains cas les logos sont floutés
+- les données d'entraînement ne sont pas assez représentatives (I) : l'ensemble d'entraînement est constitué de 50% de séquences logos et de 50% de séquences non logos alors que dans les faits, seulement 5% en moyenne des séquences dans les matchs de football sont des séquences logos. Nous avons procédé ainsi pour avoir un ensemble de données plus petit que si nous avions gardé toutes les séquences non-logos (le dataset aurait été près de 5 fois plus volumineux)
+-  les données d'entraînement ne sont pas assez représentatives (II) : la majorité des séquences logos (~90%) que nous avons dans l'ensemble d'entraînement sont des logos de Liga. Ceci est du au fait que la plupart des vidéos de match de football entier auquel nous avons pu accéder sont des vidéos de Liga.
+- les données d'entraînement ne sont pas d'assez bonne qualité : certaines vidéos sont de mauvaise qualité et même dans certains cas les logos sont floutés
 - le scrapper n'est pas parfait : l'annotation logo/non-logo des séquences est automatique. Il est probable qu'une quantité non négligeable de séquences soient incorrectement annotées.
-- l'ensemble de données est trop petit : nous entraînons les réseaux "de zéro", il est probable que 2000 séquences logos et 2000 séquences non-logos ne suffisent pas. Nous avons fait le choix de garder l'ensemble d'entrainement à 4000 exemples car un dataset plus gros aurait accru le temps d'entrainement (et donc le coût de la machine distante).
+- l'ensemble de données est trop petit : nous entraînons les réseaux "de zéro", il est probable que 2000 séquences logos et 2000 séquences non-logos ne suffisent pas. Nous avons fait le choix de garder l'ensemble d'entraînement à 4000 exemples car un dataset plus gros aurait accru le temps d'entraînement (et donc le coût de la machine distante).
 
 #+LATEX: \newpage
 * Conclusion
 L'approche la plus efficace pour la détection de replays est l'approche par détection de contours. En effet, celle-ci obtient les meilleurs résultats sur toutes les vidéos d'évaluation. De plus, elle est la plus rapide et n'est pas coûteuse en terme de puissance de calcul : les calculs se font sur le processeur (et non pas sur carte graphique comme les approches par apprentissage profond) et il faut seulement une vingtaine de minutes pour analyser 200000 frames sur un processeur Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz. Il est donc possible d'utiliser cette méthode en temps réel.
-Néanmoins, l'approche par détection de contours présente des inconvénients. Le premier est qu'elle est trop sensible aux bruits dans les vidéos. Le second est la trop forte dépendance aux hyper-paramètres (taille en pixel des images, nombre de frames dans la mosaique, paramètres du floutage gaussien, ...). Le dernier est que cette approche ne parviendra jamais à détecter certaines séquences logos, comme par exemple les logos qui ne sont pas les mêmes au début d'un replay et à la fin d'un replay.
+Néanmoins, l'approche par détection de contours présente des inconvénients. Le premier est qu'elle est trop sensible aux bruits dans les vidéos. Le second est la trop forte dépendance aux hyper-paramètres (taille en pixel des images, nombre de frames dans la mosaïque, paramètres du floutage gaussien, ...). Le dernier est que cette approche ne parviendra jamais à détecter certaines séquences logos, comme par exemple les logos qui ne sont pas les mêmes au début d'un replay et à la fin d'un replay.
 Ces inconvénients s'expliquent par le fait que cette méthode n'est pas /adaptative/ car elle n'apprend pas ce qu'est une séquence logo.
 Même si les résultats obtenus par les réseaux ne sont pas excellents, ils ne sont pas affectés par les trois inconvénients cités plus haut.
 Les résultats obtenus pour la vidéo de Premier League nous laissent penser que le réseau /a commencé/ à apprendre la forme des séquences non logos dans les vidéos. 
 Il serait intéressant de reprendre cette étude, avec cette fois-ci un ensemble de données à la fois plus conséquent et plus propre (avec de l'annotation humaine).
-Une autre piste à étudier est le /transfer learning/. Dans notre cas, nous pouvons utilisé les poids appris par les auteurs du réseau C3D sur le dataset UCF101 cite:Tran_2015. Il serait aussi intéressant d'étudier d'autres modèles comme celui mélant LSTM et CNN cite:Joe_Yue_Hei_Ng_2015.
+Une autre piste à étudier est le /transfer learning/. Dans notre cas, nous pouvons utiliser les poids appris par les auteurs du réseau C3D sur le dataset UCF101 cite:Tran_2015. Il serait aussi intéressant d'étudier d'autres modèles comme celui mélant LSTM et CNN cite:Joe_Yue_Hei_Ng_2015.
 Pour conclure sur cette recherche, nous dirons que l'analyse vidéo n'est pas chose aisée. Entraîner un classifieur pour cette tâche demande des machines très performantes ainsi qu'un ensemble de données très riches. 
-Il est important de préciser que la complexité croit de manière exponentielle avec la taille de l'ensemble de données. Par exemple, changer la convention de nommage des exemples d'entrainement n'est pas le même problème si le dataset fait 500mo ou 10go. Une grande partie de notre travail a consisté à ré-organiser l'ensemble de données et à retrouver des exemples défaillants parmi la grande quantité d'images.
+Il est important de préciser que la complexité croit de manière exponentielle avec la taille de l'ensemble de données. Par exemple, changer la convention de nommage des exemples d'entraînement n'est pas le même problème si le dataset fait 500mo ou 10go. Une grande partie de notre travail a consisté à ré-organiser l'ensemble de données et à retrouver des exemples défaillants parmi la grande quantité d'images.
 
 #+LATEX: \newpage
 * Appendice
-+ Batch : Un groupe d'échantillon d'entrainement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
++ Batch : Un groupe d'échantillon d'entraînement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
 + Clustering : procédé permettant de regrouper des éléments
 + Histogramme : représentation d'une image en fonction de ses canaux de couleurs (rouge, vert, bleu)
 + Frame : une image à l'instant t d'une vidéo
