@@ -5,7 +5,7 @@
 #+LATEX_HEADER: \usepackage{placeins}
 #+LATEX_HEADER: \usepackage[francais]{babel}
 #+LATEX_HEADER: \selectlanguage{francais}
-#+OPTIONS: \n:t
+ls#+OPTIONS: \n:t
 #+LATEX: \newpage
 * Sportagraph
 Sportagraph est une start-up filiale de Everspeed, fondée en 2013 et lancée en 2016 après trois années de recherche et développement (R&D).
@@ -26,21 +26,21 @@ L’équipe travaillant sur ce projet est composée de :
 
 En tant que développeur back end, je suis chargé de rajouter de nouvelles fonctionnalitées au DAM.
 L'une des missions qui m'a été affectée est la détection des replays dans les vidéos de sport.
-Cette fonctionnalité nous permettra de fournir à nos clients un résumé automatique des vidéos qu'ils publient sur notre plateforme.
+Cette fonctionnalité permettra de fournir à nos clients un résumé automatique des vidéos qu'ils publient sur notre plateforme.
 
 #+LATEX: \newpage
 * Introduction
 Au cours des dernières années, les techniques d'apprentissage automatique ont joué un rôle de plus en plus important dans les systèmes de reconnaissance automatique.
 Les avancements dans le domaine de l'apprentissage profond et l'accès à un volume massif de données ont permi de mettre en place des solutions de plus en plus performantes.
 En particulier, l'adoption globale des téléphones intelligents et de leur caméra intégrée a accru de manière exponentielle le nombre de vidéos disponibles sur Internet, à tel point qu'il est devenu impossible pour l'humain d'ingérer manuellement le contenu de toutes les vidéos disponibles sur la toile.
-Dans cet étude, nous allons nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
+Dans cet étude, nous nous intéressons à la tâche de "video summarization" ou, en français, de récapitulation de vidéo.
 Plus particulièrement, nous focalisons notre recherche sur les vidéos de football.
 
 Dans ces vidéos, notre objectif va être de parvenir à identifier les replays; car à partir de ces replays, nous serons capables de mettre en avant les moments importants du match.
 
 *Qu'est-ce qu'un replay ?* Un replay est la retransmission d'une action qui s'est déjà passée au cours d'une vidéo.
 Les replays sont intéressants car ils sont un indicateur d'un moment fort dans une vidéo.
-En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action, un replay est une annotation humaine sur une vidéo.
+En effet, c'est l'équipe technique chargée du montage de la vidéo qui décide ou non de créer un replay pour une action. Un replay est une annotation humaine sur une vidéo.
 Typiquement, un replay sera incrusté dans la vidéo après une action importante comme, par exemple, un but ou un pénaltie.
 
 *Caractéristique des replays* Les replays sont introduits et se terminent par un logo (cite:Hao_Pan_2002).
@@ -49,10 +49,13 @@ Les replays ne sont pas à confondre avec les ralentis.
 Les ralentis sont un type particulier de replays où l'action est montrée de nouveau en /slow-motion/, mais tous les replays ne sont pas des ralentis.
 C'est pourquoi, la vitesse de déplacement des objets dans l'image (pour détecter l'effet de /slow-motion/) n'est pas un bon critère pour la détection de replay.
 
-L'objectif de notre recherche est double.
-Dans un premier temps, nous mettons en place un système de détection de replays en utilisant uniquement les méthodes "classiques" tels que ORB (cite:Rublee_2011) ou la détection de contours.
-Ensuite, nous comparons plusieurs approches d'apprentissage automatique pour la tâche de détection dans les vidéos.
-Enfin, nous comparons l'efficacité des méthodes de vision par ordinateur "classiques" aux méthodes par apprentissage profond (deep learning).
+L'objectif de notre recherche est de créer un système robuste de détection de replays dans les vidéos de football.
+Nous proposons quatres approches :
+- la première utilise l'algorithme ORB cite:Rublee_2011 pour extraire des caractéristiques à partir des images de la vidéo et K-Means à partir de ces caractéristiques
+- dans la seconde, nous utilisons la détection de contours pour trouver les replays
+- dans la troisième, nous nous servons d'un réseau à convolution 3D pour classifier des séquences d'images
+- et enfin, dans la dernière approche, nous présentons un réseau à convolution 3D qui va apprendre à classifier à partir de séquences d'images de flux optique
+Pour conclure cette étude, nous comparons les résultats obtenus 
 
 #+LATEX: \newpage
 * Analyse d'image : état de l'art concernant la détection de replay
@@ -704,9 +707,13 @@ Les possibles raisons pouvant expliquer ces mauvais résultats sont les suivante
 - l'ensemble de données est trop petit : nous entraînons les réseaux "de zéro", il est probable que 2000 séquences logos et 2000 séquences non-logos ne suffisent pas. Nous avons fait le choix de garder l'ensemble d'entrainement à 4000 exemples car un dataset plus gros aurait accru le temps d'entrainement (et donc le coût de la machine distante).
 
 * Conclusion
-L'approche la plus efficace pour la détection de replays est l'approche par détection de contours. 
-Même si les résultats obtenus par les réseaux ne sont pas excellent, nous pensons qu'ils sont parvenus à apprendre.
-Les résultats obtenus pour la vidéo de Premier League nous laissent penser que le réseau est /capable/ d'apprendre à reconnaître les logos dans les vidéos. 
+L'approche la plus efficace pour la détection de replays est l'approche par détection de contours. En effet, celle-ci obtient les meilleurs résultats sur toutes les vidéos d'évaluation. De plus, elle est la plus rapide et n'est pas coûteuse en terme de puissance de calcul : les calculs se font sur le processeur (et non pas sur carte graphique comme les approches par apprentissage profond); il faut seulement une vingtaine de minutes pour analyser 200000 frames sur un processeur Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz. Il est donc possible d'utiliser cette méthode en temps réel.
+Néanmoins, l'approche de détection de contours présente des inconvénients. Le premier est qu'elle est trop sensible aux bruits dans les vidéos. Le second est la trop forte dépendance aux hyper-paramètres (taille en pixel des images, nombre de frames dans la mosaique, paramètres du floutage gaussien, ...). Le dernier est que cette approche ne parviendra jamais à détecter certaines séquences logos, comme par exemple les logos qui ne sont pas les mêmes au début d'un replay et à la fin d'un replay.
+Ces inconvénients s'expliquent par le fait que cette méthode n'est pas /adaptative/ car elle n'apprend pas ce qu'est une séquence logo.
+Même si les résultats obtenus par les réseaux ne sont pas excellents, ils ne sont pas affectés par les trois inconvénients cités plus haut.
+Les résultats obtenus pour la vidéo de Premier League nous laissent penser que le réseau /a commencé/ à apprendre la forme des logos dans les vidéos. 
+Il serait intéressant de reprendre cette étude, avec cette fois-ci un ensemble de données à la fois plus conséquent et plus propre (avec de l'annotation humaine).
+Une autre piste à étudier est le /transfer learning/. Dans notre cas, nous pouvons utilisé les poids appris par les auteurs du réseau C3D sur le dataset UCF101 cite:Tran_2015.
 
 * Appendice
 + Batch : Un groupe d'échantillon d'entrainement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
@@ -729,8 +736,6 @@ ref:mean-shift-res Duan, L., Xu, M., Tian, Q., & Xu, C., Mean shift based video 
 ref:sparse-vs-dense Goodfellow, I., Bengio, Y., & Courville, A., Deep Learning (2016), : MIT Press. cite:Goodfellow-et-al-2016 Figure 9.2
 
 ref:optical-flow Simonyan, K., & Zisserman, A., Two-stream convolutional networks for action recognition in videos, CoRR, abs/1406.2199(),  (2014). Figure 2
-
-ref:flux-trajectory Wang, H., Klaser, A., Schmid, C., & Liu, C., Action recognition by dense trajectories, In , CVPR 2011 (pp. ) (2011). : . Equation 2
 
 ref:c3d-res Tran, D., Bourdev, L., Fergus, R., Torresani, L., & Paluri, M., Learning spatiotemporal features with 3d convolutional networks, 2015 IEEE International Conference on Computer Vision (ICCV), (),  (2015).  http://dx.doi.org/10.1109/iccv.2015.510. Table 3
 
