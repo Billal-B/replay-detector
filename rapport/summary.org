@@ -54,16 +54,30 @@ Dans un premier temps, nous dressons un inventaire de l'état de l'art concernan
 Une fois les bases théoriques posées, nous proposons quatres approches :
 - la première utilise l'algorithme ORB cite:Rublee_2011 pour extraire des caractéristiques à partir des images de la vidéo et K-Means à partir de ces caractéristiques
 - dans la seconde, nous utilisons la détection de contours pour trouver les replays
-- dans la troisième, nous nous servons d'un réseau à convolution 3D pour classifier des séquences d'images afin d'apprendre à différencier les séquences d'images logo et les séquences d'images non logo
+- dans la troisième, nous nous servons d'un réseau à convolution 3D pour classifier des séquences d'images représentant des morceaux de la vidéo
 - et enfin, dans la dernière approche, nous présentons un réseau à convolution 3D qui va apprendre à classifier à partir de séquences d'images de flux optique
 Pour conclure cette étude, nous comparons les résultats obtenus pour déterminer quelle méthode répond le mieux à notre besoin.
 
 #+LATEX: \newpage
 * Analyse d'image : état de l'art concernant la détection de replay
 La détection de replays est un domaine de recherche à part entière et les articles sont abondants (cite:Hao_Pan_2002,Ling_Yu_Duan,Chu_2015,Javed_2019 ...).
+Dans cette partie, nous présentons quelques approches que nous trouvons intéressantes.
 
+** Automatic Detection Of Replay Segments In Broadcast Sports Programs By Detection Of Logos In Scene Transitions
+#+CAPTION: Exemple de transition logo label:logo-transition
+#+ATTR_LATEX: :width 10cm
+[[file:logo_transition.png]]
+
+Dans cet article (cite:Hao_Pan_2002), Pan et. Al propose de détecter les replays dans les vidéos de sport en trouvant les frames contenant des logos. 
+L'auteur fait l'hypothèse que dans les vidéos de sport, les replays sont toujours compris entre deux animations spéciales qui font la transition entre le replay et le temps réel.
+Ces transitions contiennent en général le logo de la chaîne émettant la vidéo ou de l'organisme en charge de l'événement sportif. Un montage spécifique est associé au logo. 
+Un exemple d'une de ces transitions est donné dans la figure ref:logo-transition. Nous voyons que le montage du logo est incrusté dans la vidéo et se déroule sur plusieurs frames; de plus, sa forme est facilement reconnaissable par rapport aux autres objets.
+Une autre hypothèse formulée par l'auteur est que ces transitions sont les mêmes tout au long de la vidéo.
+À partir de ces deux hypothèses, les auteurs proposent un système permettant de détecter les replays. L'idée est de trouver dans la vidéo un /logo template/ (pour ça, il propose d'utiliser un détecteur de /slow-motion/ cite:panil_detec), puis de trouver tous les logos dans la vidéo grâce au /logo template/ et à une mesure de comparaison entre une frame et le /logo template/, puis finalement d'identifier les replays en regroupant les logos deux à deux.
+
+Nous trouvons cette approche intéressante car elle donne un critère puissant permettant de détecter les replays : ceux-ci commencent et se terminent par une transition de logo.
 ** A Robust Replay Detection
-Cette approche cite:xu11_robus_replay_detec_algor_soccer_video détecte les replays en trouvant les logos dans les vidéo.
+Cette approche cite:xu11_robus_replay_detec_algor_soccer_video s'inspire de la méthode introduite par Pan et al. (cite:Hao_Pan_2002), et détecte les replays en trouvant les logos dans les vidéo.
 Les logos sont trouvés grâce à la luminance. Nous savons qu'un logo est présent pendant 0.8 secondes soit 18 frames pour une vidéo de 24 FPS.
 Toutes les frames qui ont obtenues un score supérieur à un certain seuil sont considérés comme des candidats pour être le /logo template/.
 Le /logo template/ est le logo qui représente le mieux les logos dans la vidéo et c'est celui-ci qui va servir de référence pour trouver tous les logos.
@@ -76,7 +90,7 @@ Toutes les frames dont le score est inférieur à un certain seuil sont écarté
 *** Recherche du logo template parmi les frames filtrées
 Le logo template est le frame qui représente le mieux tous les logos dans la vidéo.
 Pour déterminer le logo template parmi les frames filtrées, l'algorithme K-means est utilisé pour séparer cet ensemble en deux (K = 2) en fonction de la luminance moyenne des frames.
-Pour trouver le logo template, il faut d'abord trouver le cluster qui contient les logos. Les auteurs estiment que celui-ci est celui qui a le centre de cluster le plus élevé.
+Pour trouver le logo template, il faut d'abord trouver le cluster qui contient les logos. Les auteurs estiment que c'est le cluster avec le centre det cluster le plus élevé.
 Une fois le cluster de logos déterminé, le /logo template/ est la frame m qui minimise la distance avec toutes les autres frames du cluster. La formule qui permet de calculer la distance est donnée en ref:calc-dist.
 
 #+CAPTION: Formule de la distance entre deux frames dans le cluster label:calc-dist
@@ -96,7 +110,7 @@ Une fois que les logos sont détectés, nous pouvons trouver les replays en cher
 #+ATTR_LATEX: :width 15cm
 [[file:robust_res.JPG]]
 Après avoir implémenté cette méthode, nous avons constaté que celle-ci n'est pas efficace et ne fonctionne pas du tout sur notre ensemble de test.
-Cette approche est trop dépendant de la luminance et elle ne parvient pas à détecter les logos peu lumineux.
+Cette approche est trop dépendante de la luminance et elle ne parvient pas à détecter les logos peu lumineux.
 De plus, les bases mathématiques (notamment la manière de choisir le cluster et la mesure de distance) sont un peu douteuses.
 Enfin, celle-ci dépend trop du paramètre "seuil de luminance" affectant les logos détectés.
 Le seuil de luminance fournis par les auteurs ne produit pas de bons résultats sur toutes les vidéos.
@@ -249,7 +263,7 @@ Ces classifieurs sont des réseaux de neurones convolutifs profonds.
 Ce réseau a une architecture de classifieur d'image classique. 
 Il va permettre de donner un indice fort pour la prédiction, car certaines actions sont très liées à certains objets.
 De plus, la recherche dans le domaine de la classification est un domaine à part entière; toutes les avancées dans le domaine augmenteront l'efficacité de ce classifieur.
-Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches par transfer learning sont efficaces.
+Il n'est pas nécessaire d'apprendre ce réseau "from scratch" (de zéro), les approches par /transfer learning/ sont efficaces.
 
 *** Classifieur temporel
 #+CAPTION: Flux optique label:optical-flow label:opt-flow
@@ -275,6 +289,7 @@ Chacunes de ces images servira d'entrée au CNN (classifieur temporel).
 
 Le classifieur spatial est pré-entrainé avec ImageNet, tandis que le temporel est entraîné de zéro (car il n'y a pas de réseau déjà entraîné pour cette tâche).
 Les ensemble de données utilisés pour l'entraînement et l'évaluation sont UCF-101 et HMDB-51, contenant à eux deux près de 20000 vidéos annotées.
+Avant l'entraînement, les images de flux optiques sont pré-calculées afin de n'avoir à générer ces images qu'une seule fois.
 
 *Note* Pour calculer la classe d'un frame à l'instant t, les auteurs proposent deux méthodes :
 - fusion par la moyenne (by averaging) : y_t = y_t_spatial + y_t_temporal / 2
@@ -306,7 +321,7 @@ L'objectif est d'apprendre des caractéristiques qui soient :
 Les auteurs appellent leur approche C3D (3D ConvNet).
 Comparé aux réseaux à convolution 2D, C3D est capable de modéliser plus efficacement l'information spatio-temporelle grâce à la convolution et au pooling sur trois dimensions.
 La convolution 2D appliquée à une image produira en sortie une image, la convolution 2D appliquée à une suite d'images produira aussi une image.
-C'est pourquoi les réseaux à convolution 2D perdent l'information temporelle après l'opération de convolution. La convolution 3D permet, elle, de préserver cette information.
+C'est pourquoi les réseaux à convolution 2D perdent l'information temporelle après l'opération de convolution. La convolution 3D permet, elle, de préserver cette information dans sa dimension additionnelle.
 
 *** Architecture et entraînement du réseau
 #+CAPTION: Architecture C3D label:arch-c3d
@@ -407,7 +422,7 @@ Ensuite, nous présentons deux approches par apprentissage profond :
 
 ** Détection des plans
 Les approches que nous proposons itérent sur tous les frames de la vidéo, à la recherche des logos pouvant se trouver au début et à la fin des replays.
-Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche à tous les frames qui sont entre deux plans.
+Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche seulement aux frames qui sont entre deux plans.
 
 C'est pourquoi nous allons chercher une méthode permettant de détecter les changements de plan dans les vidéos.
 
@@ -425,10 +440,10 @@ Le premier poid S_1 est le poid maximal. Ces poids représentent l'information c
 
 Nous allons assigner un rang à la matrice M,  ce rang va être égal au nombre d'éléments s dans S tel que s/S1 > threshold. Le rang va être calculé pour chaque fenêtre de frames dans la vidéo.
 
-Si le rang d'une fenêtre est plus que grand que le rang de la fenêtre avant elle, alors le contenu visuel de la fenêtre est différent de la fenêtre précédente.
+Si le rang d'une fenêtre est plus grand que le rang de la fenêtre avant elle, alors le contenu visuel de la fenêtre est différent de la fenêtre précédente.
 À l'inverse, si le rang est inférieure à la fenêtre précédente, alors le contenu visuel se stabilise. S'il est de 1, alors c'est stable.
 
-Le début d'un frame est celui qui maximise le rang parmi les fenêtres environnantes.
+Le début d'un nouveau plan est indiqué par la fenêtre qui maximise le rang parmi les fenêtres environnantes.
 
 Cette méthode pour trouver les plans dans une vidéo est très efficace, et nous servira dans la suite de notre recherche.
 
@@ -455,31 +470,30 @@ Dans cette approche, nous cherchons à reconnaître les logos dans les vidéo.
 Pour ce faire, nous optons pour une approche de clustering. 
 L'idée est de séparer la vidéo en deux groupes : un groupe pour les frames logo, et un autre groupe pour les frames non-logo.
 
-Il existe plusieurs manières de représenter une image, par exemple :
-- une matrice w * l * c où c est le nombre de canal (3 pour une image couleur, 1 pour une image en noir et blanc), w et l la largeur et la longueur (resp.) de l'image en pixel
-- un histogramme des couleurs RGB
-- un histogramme HSV
-Néanmoins, aucune de ces méthodes ne permet de vectoriser l'image de tel sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.
-
-De plus, dans notre cas, nous souhaitons regrouper non pas des frames (images) mais des plans (séquences d'images).
-
 L'algorithme KMeans permet de regrouper les objets similaires en fonction de leurs caractéristiques. 
 Dans notre cas, il va nous permettre de créer deux groupes d'images : logo / non logo.
 L'avantage de KMeans est qu'il est est rapide et efficace dans la plupart des cas.
 
 Pour fonctionner, KMeans a besoin que les objets que l'on souhaite séparer en groupe soit sous forme de vecteurs et que ces vecteurs soient discriminants. C'est à dire qu'un frame logo ne doit pas être proche dans l'espace d'un frame non-logo.
 
-Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques à partir pour chaque plan dans la vidéo. Cette algorithme calcule un vecteur de dimension 1 à partir d'une image; chaque élément i du vecteur est à un point (donc à deux coordonnées x_i et y_i) correspondant à un point d'intéret dans l'image.
+Il existe plusieurs manières de vectoriser une image, par exemple :
+- une matrice w * l * c où c est le nombre de canal (3 pour une image couleur, 1 pour une image en noir et blanc), w et l la largeur et la longueur (resp.) de l'image en pixel
+- un histogramme des couleurs RGB
+- un histogramme HSV
+Néanmoins, aucune de ces méthodes ne permet de représenter l'image de tel sorte qu'un algorithme comme K-Means obtienne de bons résultats, ces caractéristiques ne sont pas assez discriminantes.
 
-*** Première expérimentation : 1 frame par shot
+Dans cette partie, nous utilisons l'algorithme ORB pour extraire des caractéristiques pour chaque transition de plan dans la vidéo. Cette algorithme calcule un vecteur de dimension 1 à partir d'une image; chaque élément i du vecteur est à un point (donc à deux coordonnées x_i et y_i) correspondant à un point d'intéret dans l'image.
+
+*** Première expérimentation : une seule image par transition de plan
 #+CAPTION: Caractéristiques extraites par ORB (en vert), pour une seule image par plan
 #+ATTR_LATEX: :width 8cm
 [[file:orb_simple_res.JPG]]
-Ici, nous ne récupérons les caractéristiques que d'une seule image par plan. L'image pour laquelle nous extrayons les caractèristiques est la dernière frame de la séquence, car c'est la dernière image faisant la transition entre deux plans (et dans le cas des logos, c'est dans celle-ci que sa forme visuelle est la plus nette).
+Ici, nous ne récupérons les caractéristiques que d'une seule image par transition de plan. L'image pour laquelle nous extrayons les caractèristiques est la dernière frame de la séquence, car c'est la dernière image faisant la transition entre deux plans (et dans le cas des logos, c'est dans celle-ci que sa forme visuelle est la plus nette).
 
 L'algorithme est le suivant :
 #+BEGIN_SRC
-- Récupérer le frame à la fin de chaque shot
+- S = les transition de plans détectées
+- Récupérer le frame à la fin de chaque transition de plan dans S
   - nous obtenons |S| frame
 - Pour chaque frame, calculer ses features (orb ou akaze)
   - Nous obtenons |S| vecteurs
@@ -487,7 +501,7 @@ L'algorithme est le suivant :
   - le groupe le plus petit est le groupe des logo
 #+END_SRC
 
-*** Deuxième expérimentation : 1 fenêtre de frame par shot:
+*** Deuxième expérimentation : une séquence d'images par plan:
 #+CAPTION: Caractéristiques extraites par ORB (en vert) pour un plan (aggrégat des caractéristiques de chaque image dans le plan) label:orb-window
 #+ATTR_LATEX: :width 8cm
 file:akaze_window_res.jpg
