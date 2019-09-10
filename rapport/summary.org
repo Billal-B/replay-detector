@@ -3,8 +3,8 @@
 #+LATEX_HEADER: \setlength\parindent{0pt}
 #+LATEX_HEADER: \setlength\parindent{0pt}
 #+LATEX_HEADER: \usepackage{placeins}
-#+LATEX_HEADER: \usepackage[francais]{babel}
-#+LATEX_HEADER: \selectlanguage{francais}
+#+LATEX_HEADER: \usepackage[french]{babel}
+#+LATEX_HEADER: \selectlanguage{french}
 #+OPTIONS: \n:t
 #+LATEX: \newpage
 * Sportagraph
@@ -68,7 +68,7 @@ Dans cette partie, nous présentons quelques approches que nous trouvons intére
 #+ATTR_LATEX: :width 10cm
 [[file:logo_transition.png]]
 
-Dans cet article (cite:Hao_Pan_2002), Pan et. Al propose de détecter les replays dans les vidéos de sport en trouvant les frames contenant des logos. 
+Dans cet article (cite:Hao_Pan_2002), Pan propose de détecter les replays dans les vidéos de sport en trouvant les frames contenant des logos. 
 L'auteur fait l'hypothèse que dans les vidéos de sport, les replays sont toujours compris entre deux animations spéciales qui font la transition entre le replay et le temps réel.
 Ces transitions contiennent en général le logo de la chaîne émettant la vidéo ou de l'organisme en charge de l'événement sportif. Un montage spécifique est associé au logo. 
 Un exemple d'une de ces transitions est donné dans la figure ref:logo-transition. Nous voyons que le montage du logo est incrusté dans la vidéo et se déroule sur plusieurs frames; de plus, sa forme est facilement reconnaissable par rapport aux autres objets.
@@ -421,8 +421,14 @@ Ensuite, nous présentons deux approches par apprentissage profond :
 - la seconde utilise un réseau à convolution 3D sur des séquences d'images représentant le flux optique des objets dans la vidéo
 
 ** Détection des plans
-Les approches que nous proposons itèrent sur tous les frames de la vidéo, à la recherche des logos pouvant se trouver au début et à la fin des replays.
-Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche seulement aux frames qui sont entre deux plans.
+#+CAPTION: Changement de plan introduit par un replay label:plan
+#+ATTR_LATEX: :width 10cm
+[[file:plan.png]]
+
+Les approches que nous proposons recherche dans la vidéo les logos pouvant se trouver au début et à la fin des replays.
+Or, un replay introduit un changement avant et après lui (car l'action rejouée par le replay n'est pas sur le même plan que l'action avant et après lui).
+Si nous faisons l'hypothèse qu'un replay entraînera toujours un changement de plan et que les logos sont au début et à la fin du replays, alors au lieu de rechercher les logos parmi tous les frames de la vidéo, nous pouvons réduire la recherche seulement aux frames qui sont entre deux plans.
+En effet, le logo au début du replay introduit un changement de plan entre l'action avant le replay et le replay, et le logo à la fin du replay introduit un changement de plan entre l'action après le replay et le replay. La figure ref:plan illustre cette hypothèse.
 
 C'est pourquoi nous allons chercher une méthode permettant de détecter les changements de plan dans les vidéos.
 
@@ -501,8 +507,8 @@ L'algorithme est le suivant :
   - le groupe le plus petit est le groupe des logo
 #+END_SRC
 
-*** Deuxième expérimentation : une séquence d'images par plan:
-#+CAPTION: Caractéristiques extraites par ORB (en vert) pour un plan (agrégat des caractéristiques de chaque image dans le plan) label:orb-window
+*** Deuxième expérimentation : une séquence d'images par transition de plan:
+#+CAPTION: Caractéristiques extraites par ORB (en vert) pour un séquence logo (agrégat des caractéristiques de chaque image dans le plan) label:orb-window
 #+ATTR_LATEX: :width 8cm
 file:akaze_window_res.jpg
 L'approche précédente ne récupère qu'une seule image par plan. 
@@ -511,8 +517,9 @@ Dans cette approche, nous récupérons plusieurs images consécutives pour chaqu
 
 L'algorithme est le suivant :
 #+BEGIN_SRC
-- Récupérer W frames pour chaque shot, les regrouper en une fenêtre
-  - nous obtenons |S| fenêtres de dimension W, où W est le nombre de frame et S l'ensemble des shots
+- S = les transition de plans détectées
+- Récupérer W frames pour chaque transition de plan dans S
+  - nous obtenons |S| fenêtres de dimension W, où W est le nombre de frame
 - Pour chaque fenêtre, calculer les features de chacun de ses frames (ORB)
   - Nous obtenons un vecteur de dimension S*W
 - Utiliser KMeans avec K=2 pour séparer les vecteurs en deux groupes
@@ -549,12 +556,13 @@ La longueur des segments nous donne un score, et si ce score est supérieur à u
 *** Mosaïque de plan
 #+CAPTION: ET binaire (en bas) appliqué à une mosaïque de plan à l'instant t (à gauche) et à une mosaïque de plan à l'instant t' (à droite) label:mosaic
 #+ATTR_LATEX: :width 16cm
-[[file:mosaïque_add.png]]
+[[file:mosaique_add.png]]
 Pour des raisons d'optimisation, il n'est pas viable de comparer chaque frame de chaque transition de plan avec chaque frame des transitions voisines.
 C'est pourquoi, pour chaque transition de plan, deux images sont générées.
-Chaque image est de dimension I² * width * height où I est le nombre de frames dans la transition. Chaque "case" dans l'image va correspondre aux contours d'une frame dans la transition de plan.
+Chaque image est de dimension (width * I) * (height*I) où I est le nombre de frames dans la transition. Chaque "case" dans l'image va correspondre aux contours d'une frame dans la transition de plan.
 La première matrice a un décalage d'un frame par ligne, la seconde n'a pas de décalage.
 Pour comparer deux shot (figure ref:mosaic), il suffit d’appliquer un ET binaire entre les matrices des mosaïques, puis de calculer la longueur des contours dans cette matrice (les images sont des matrices).
+L'idée derrière la mosaïque de plan est d'avoir les contours pour toutes les images de la transition de plan dans une même image.
 
 *** Algorithme
 #+BEGIN_SRC
@@ -592,12 +600,13 @@ Nous pensons que, comme pour l'approche par convolution 3D sur les séquences d'
 Lors de l'entraînement, le réseau va apprendre à partir de séquences d'images de flux optique labellisées (logo/non-logo).
 Là aussi, nous n'allons traiter que les frames qui sont entre deux plans (cite:Abd_Almageed_2008).
 
+#+LATEX: \newpage
 * Collecte des données & entraînement
-** Datasets
+** Ensemble de données
 L'objectif de la collecte de données est d'obtenir les ensembles de données suivants :
 - Dataset non logo
 - Dataset logo
-Chaque élément du dataset contient :
+Chaque élément de l'ensemble de données contient :
 - une séquence de 20 images labellisée logo ou non logo (pour un classifieur d'image à convolution 3D)
 - une séquence de 19 images de flux optique labellisée logo ou non logo (pour un classifieur de flux optique à convolution 3D)
 
@@ -614,22 +623,22 @@ L'algorithme va récupérer des séquences d'images logos/non-logos. Pour obteni
 Dans notre cas, les séquences d'images sont de taille 20, donc les séquences d'images de flux optique sont de taille 19.
 
 ** Architecture du scrapper
-#+CAPTION: Architecture proposé pour le scrapper de logos
+#+CAPTION: Architecture du scrapper de logos label:arch-scrap
 #+ATTR_LATEX: :width 15cm
 [[file:arch_scrap.png]]
-Nous voulons une architecture de scrapping qui soit distribuée.
-En effet, le traitement d'une vidéo prend en moyenne trente minutes, il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
-Pour mettre en place cette architecture, nous avons créé une image Docker englobant le programme de détection de logos par matching de contours et qui importe les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
+Nous voulons une architecture de /scrapping/ qui soit distribuée. Cette architecture est présentée dans la figure ref:arch-scrap.
+En effet, le traitement d'une vidéo prend en moyenne trente minutes (10 minutes pour trouver les replays, et 20 minutes pour l'import des fichiers etc..), il est donc nécessaire de pouvoir traiter plusieurs vidéos en même temps.
+Pour mettre en place cette architecture, nous avons créé une image /Docker/ englobant le programme de détection de logos par matching de contours et qui importe les frames des séquences logo ainsi que leur flux optique sur la solution de stockage de GCP (storage).
 L'image est stockée sur le Container Registry de GCP, et va être lancée dans un container.
 
 *** Kubernetes
 #+CAPTION: Cluster Kubernetes sur GCP label:cluster-kubernetes
 #+ATTR_LATEX: :width 10cm
 [[file:kubernetes_pods.PNG]]
-Un cluster Kubernetes ref:cluster-kubernetes avec un load balancer va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
+Un /cluster/ Kubernetes ref:cluster-kubernetes avec un /load balancer/ va se charger d'ordonner les containers et de repartir la charge de travail entre les différents "pods" (unité exécutant un conteneur Docker).
 Ainsi, il va être possible de traiter plusieurs vidéos en même temps car la charge de travail ne sera plus répartie sur une seule machine, mais sur plusieurs. Kubernetes est un outil efficace de mise à l'échelle.
 ** Données collectées
-Nous avons parsé plusieurs vidéos de matchs complets de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
+Nous avons parsé plusieurs vidéos de matchs de football. Au total, 2611 séquences de logos et 2611 séquences non-logo ont été obtenues.
 En tout, plus de 200000 images sont générées (8 go sur disque) :
 - 2611 séquences de 20 images non-logos
 - 2611 séquences de 20 images logos
@@ -637,11 +646,8 @@ En tout, plus de 200000 images sont générées (8 go sur disque) :
 - 2611 séquences de 19 images de flux optique logos
 
 ** Entraînement et architectures des modèles
-#+CAPTION: Architecture utilisée pour le réseau à convolution 3D label:keras-c3d
-#+ATTR_LATEX: :width 10cm
-[[file:c3d_model.png]]
 L'entraînement va se faire en utilisant les instances de machines virtuelles préconfigurées pour l'apprentissage profond de Google Cloud. Le framework utilisé est Keras.
-Pour les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015. Le modèle Keras est présenté en ref:keras-c3d
+Pour entraîner les réseaux à convolution 3D (classifieur de séquences d'images et classifieur de séquences d'images de flux optique), nous allons reprendre l'architecture proposée par cite:Tran_2015. 
 
 Le ratio ensemble d'entraînement/ensemble de validation est de 0,8.
 
@@ -657,28 +663,30 @@ Nous voyons que le minima de la fonction de perte (val_loss) est atteint après 
 Le minima de la fonction de perte (val_loss) est atteint après 7 epoch (0,50), pour une précision (val_acc) de 77% sur l'ensemble de test.
 
 ** Difficultés rencontrées
-*** Adaptation des données pour le réseau
-Les données que nous récupérons en scrappant les matchs de football sont des dossiers contenant des séquences d'images logo/non-logo.
-Pour pouvoir donner en entrée ces données aux réseaux, nous avons besoin de transformer les séquences d'images en vecteur de dimension 4 (nombres d'images, largeur de chaque image, longueur de chaque image et nombre de canaux de chaque image) et de faire en sorte de pouvoir donner ces vecteurs en entrée du réseau par batch. La solution a ce problème a été de créer un /generator/ personnalisé qui se charge d'aller lire les séquences dans le bon dossier et de ne charger en mémoire que le nombre nécessaire de séquences (taille du batch).
 *** Avoir une machine assez puissante pour la convolution 3D
 L'entraînement n'est pas possible sur une machine non dotée d'une carte graphique puissante. Pour ça, nous avons du utilisé une machine virtuelle fournie par Google. L'inconvénient de cette solution est le prix. En effet, celle-ci coûte près de 300€ par mois; ce qui ne nous a permis d'essayer autant de modèle qui nous aurions aimé, car l'entraînement est long et donc coûteux.
 *** La gestion de l'ensemble de données
-Pour 2611 exemples de séquences logo et 2611 exemples de séquences non-logo, la taille de l'ensemble de données atteint presque les 10go pour plus de 200000 images. Manipuler autant de données est un problème complexe à bien des niveaux : l'importation/exportation des fichiers est longue (surtout le déplacement de ceux-ci entre la machine locale et la machine à distance), la réorganisation du dossier est compliquée en cas d'erreur, les données erronnées (par exemple si le dossier représentant une séquence est vide suite à une défaillance du scrapper) sont difficilement détectables, etc... À titre d'exemple, même sur la machine très puissante fournie par Google, l'extraction de l'archive contenant toutes les images de notre ensemble de données prend plus d'une heure.
+Pour 2611 exemples de séquences logo et 2611 exemples de séquences non-logo, la taille de l'ensemble de données atteint presque les 10go pour plus de 200000 images. Pour archiver ces images, nous avons opté pour la structure arborescente suivante : tag/type-image/id-séquence/images-séquences; où tag peut être logo ou non logo, type-image peut être flux optique ou normal (séquence de frame dans la vidéo), id-séquence un identifiant unique associé à chaque séquence et images-séquences les images de la séquence.
+Manipuler autant de données est un problème complexe à bien des niveaux : l'importation/exportation des fichiers est longue (surtout le déplacement de ceux-ci entre la machine locale et la machine à distance), réorganiser la structure des dossiers est compliqué en cas d'erreur, les données erronnées (par exemple si le dossier représentant une séquence est vide suite à une défaillance du scrapper) sont difficilement détectables, l'extraction de l'archive contenant le dataset prend du temps, etc... À titre d'exemple, même sur la machine très puissante fournie par Google, l'extraction de l'archive contenant toutes les images de notre ensemble de données prend plus d'une heure.
+*** Adaptation des données pour le réseau
+Les données sont des dossiers contenant des séquences d'images logo/non-logo.
+Pour pouvoir donner en entrée ces données aux réseaux, nous avons besoin de transformer les séquences d'images en vecteur de dimension 4 (nombres d'images, largeur de chaque image, longueur de chaque image et nombre de canaux de chaque image) et de faire en sorte de pouvoir donner ces vecteurs en entrée du réseau par batch. La solution a ce problème a été de créer un /generator/ personnalisé qui se charge d'aller lire les séquences dans le bon dossier et de ne charger en mémoire que le nombre nécessaire de séquences (taille du batch).
+
 #+LATEX: \newpage
 * Résultats obtenus
 Dans cette partie, nous allons évaluer chaque approche sur le même ensemble d'évalutation.
 
 ** Procédure d'évaluation
 L'ensemble d'évaluation est le suivant : une vidéo de Ligue 1 de 150k frames, une vidéo de Ligue 1 de 80k frames, une vidéo de Liga et enfin une vidéo de Premier League. Trois logos différents (Liga, Ligue 1 et Premier League) vont servir à évaluer nos approches.
-Dans toutes les expérimentations, la vidéo est découpée en plans (plan). L'évaluation porte sur le nombre de logos correctement détectés dans la vidéo.
+Dans toutes les expérimentations, la vidéo est découpée en plans et nous récupérons les transitions de plan. L'évaluation porte sur le nombre de logos correctement détectés dans la vidéo.
 
 ** Résultats pour ORB
 #+CAPTION: Résultats obtenus pour le clustering avec les caractéristiques extraites par ORB label:orb-res
 #+ATTR_LATEX: :width 15cm
 [[file:res_orb.png]]
 
-Les résultats (ref:orb-res) sont mauvais sur toutes les vidéos.
-Le gros inconvénient de ces méthodes est le caractère arbitraire de la sélection du groupe de logo après le clustering.
+Les résultats sont présentés dans la figure ref:orb-res. Cette approche à tendance à considérer trop de séquences comme des séquences logos (faible précision sur toutes les vidéos).
+Le gros inconvénient de cette méthode est le caractère arbitraire de la sélection du groupe de logo après le clustering.
 En effet, nous faisons l'hypothèse qu'il y aura toujours plus de non-logos que de logos, ce qui n'est pas toujours vrai.
 De plus, l'algorithme d'extraction de caractéristiques ne marche pas toujours très bien, ce qui fausse évidemment le clustering par la suite.
 
@@ -698,12 +706,11 @@ Après avoir fait plusieurs essais avec des paramètres différents à chaque fo
 
 Concernant le temps d’exécution, celui-ci est relié presque entièrement à la taille de la vidéo donnée en entrée, ainsi qu’à la taille des mosaïques. Il reste néanmoins faible, et cette approche peut être utilisée en temps réel.
 
-Les limitations de notre méthode sont les suivantes :
-- Dans certaines vidéos, il n’y a pas de logo pour les replays (simple fondu)
-- Dans certaines vidéos, les logos de début et fin de replay ne sont pas les mêmes, cette approche ne permet pas de détecter les replays dans ce cas
-- Dans certains vidéos, il y a des logos au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
+L'inconvénient de cette méthode est qu'elle n'est pas capable de détecter les replays dans les cas suivants :
+- s'il n’y a pas de logo pour les replays (simple fondu)
+- si les logos au début et à la fin des replays ne sont pas les mêmes
+- s'il y a des logos au début des replays, mais pas de logo à la fin des replays (un simple fondu remplace le logo).
 
-Puisque cette méthode est rapide et ne renvoie presque pas de faux positifs, elle nous servira par la suite pour créer un ensemble de données d'image avec des logos de replay.
 ** Résultats pour l'approche par apprentissage profond
 #+CAPTION: Résultats obtenus par les réseaux label:conv-res
 #+ATTR_LATEX: :width 15cm
@@ -714,7 +721,7 @@ Le réseau à convolution 3D sur des séquences d'images de flux optique obtient
 
 Les possibles raisons pouvant expliquer ces mauvais résultats sont les suivantes :
 - les données d'entraînement ne sont pas assez représentatives (I) : l'ensemble d'entraînement est constitué de 50% de séquences logos et de 50% de séquences non logos alors que dans les faits, seulement 5% en moyenne des séquences dans les matchs de football sont des séquences logos. Nous avons procédé ainsi pour avoir un ensemble de données plus petit que si nous avions gardé toutes les séquences non-logos (le dataset aurait été près de 5 fois plus volumineux)
--  les données d'entraînement ne sont pas assez représentatives (II) : la majorité des séquences logos (~90%) que nous avons dans l'ensemble d'entraînement sont des logos de Liga. Ceci est du au fait que la plupart des vidéos de match de football entier auquel nous avons pu accéder sont des vidéos de Liga.
+-  les données d'entraînement ne sont pas assez représentatives (II) : la majorité des séquences logos (~90%) que nous avons dans l'ensemble d'entraînement sont des logos de Liga. Ceci est du au fait que la plupart des vidéos que nous avons pu récupérer sont des vidéos de Liga.
 - les données d'entraînement ne sont pas d'assez bonne qualité : certaines vidéos sont de mauvaise qualité et même dans certains cas les logos sont floutés
 - le scrapper n'est pas parfait : l'annotation logo/non-logo des séquences est automatique. Il est probable qu'une quantité non négligeable de séquences soient incorrectement annotées.
 - l'ensemble de données est trop petit : nous entraînons les réseaux "de zéro", il est probable que 2000 séquences logos et 2000 séquences non-logos ne suffisent pas. Nous avons fait le choix de garder l'ensemble d'entraînement à 4000 exemples car un dataset plus gros aurait accru le temps d'entraînement (et donc le coût de la machine distante).
@@ -732,8 +739,8 @@ Pour conclure sur cette recherche, nous dirons que l'analyse vidéo n'est pas ch
 Il est important de préciser que la complexité croit de manière exponentielle avec la taille de l'ensemble de données. Par exemple, changer la convention de nommage des exemples d'entraînement n'est pas le même problème si le dataset fait 500mo ou 10go. Une grande partie de notre travail a consisté à ré-organiser l'ensemble de données et à retrouver des exemples défaillants parmi la grande quantité d'images.
 
 #+LATEX: \newpage
-* Appendice
-+ Batch : Un groupe d'échantillon d'entraînement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
+* Glossaire
++ Batch : un groupe d'échantillon d'entraînement; permet de traiter l'ensemble d'apprentissage plus vite qu'en ne traitant qu'un seul échantillon à la fois.
 + Clustering : procédé permettant de regrouper des éléments
 + Histogramme : représentation d'une image en fonction de ses canaux de couleurs (rouge, vert, bleu)
 + Frame : une image à l'instant t d'une vidéo
@@ -743,6 +750,15 @@ Il est important de préciser que la complexité croit de manière exponentielle
 + RNN : Recurrent Neural Networks, ou réseaux de neurones récurrents (RNR) en français
 + CNN : Convolutional Neural Network, réseaux de neurones convolutifs (RNC) en français
 + LSTM : Long Short Term Memory
++ Cluster : un groupe; en apprentissage automatique, signifie un groupe d'objet partageant des caractèristiques similaires; en infrastructure réseau, signifie un ensemble de machines
++ Scrapping : technique d'extraction de contenu de sites Web; dans notre cas, nous récupérons des vidéos sur Youtube
++ Transfer learning: procédé d'apprentissage automatique consistant à réutiliser les poids appris par un réseau dans un autre réseau
++ Slow motion : nous parlons de slow-motion quand les objets se déplacent moins vite que la normale dans une vidéo
++ Docker : solution permettant de lancer une application dans son propre environnement (image) à partir d'une suite d'instruction (Dockerfile)
++ GCP : Google Cloud Platform
++ Load balancer : technique permettant de répartir la charge de travail parmi un ensemble de machines
++ Framework : ensemble de librairies facilitant la tâche du programmeur
++ Dataset : anglicisme fréquemment utilisé pour parler d'un ensemble de données
 
 #+LATEX: \newpage
 * Table des figures
