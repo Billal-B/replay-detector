@@ -13,7 +13,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
 import scala.concurrent.duration._
 import scala.concurrent.Future
-
+/*
 object Webserver {
   def apply(): Unit = {
     implicit val system = ActorSystem("my-system")
@@ -69,3 +69,4 @@ object Webserver {
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
   }
 }
+*/

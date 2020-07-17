@@ -1,14 +1,12 @@
 import java.io.File
-import java.sql.Date
-import java.time.LocalDate
 
+import cats.effect.{ExitCode, IO, IOApp}
 import org.opencv.core.Core
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io.Source
 import scala.util.Properties
-import scala.util.control.NonFatal
+import cats.implicits._
+
 
 /**
   * A logo at the beginning or at the end of a replay
@@ -54,33 +52,26 @@ trait Configuration {
   // def findShot: Vector[Int]
 }
 
-object Main extends App {
-  System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
-  if (sys.env("MODE") == "WEBSERVER") {
-    Webserver()
-  }
-  else if (sys.env("MODE") == "YOUTUBE") {
-    implicit val ec = ExecutionContext.global
+object Main extends IOApp {
+  override def run(args: List[String]): IO[ExitCode] = {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME) // we load the openCV library
     val src = Source.fromFile("to_parse")
-    val task = Future.traverse(src.getLines()) {youtubeUrl =>
-      println(youtubeUrl)
-      YoutubeLogoExtractor(
-        youtubeUrl,
-        None,
-        VideoInfo(
-          Properties.envOrElse("startFrame", "0").toInt,
-          Properties.envOrElse("frameToAnalyse", "2147483647").toInt,
-          Properties.envOrElse("videoWidth", "100").toInt,
-          Properties.envOrElse("videoHeight", "100").toInt,
-          (System.currentTimeMillis() / 1000L).toString
+
+    val tasks = src.getLines().toList map {youtubeUrl =>
+        println(youtubeUrl)
+        YoutubeLogoExtractor(
+          youtubeUrl,
+          None,
+          VideoInfo(
+            Properties.envOrElse("startFrame", "0").toInt,
+            Properties.envOrElse("frameToAnalyse", "2147483647").toInt,
+            Properties.envOrElse("videoWidth", "100").toInt,
+            Properties.envOrElse("videoHeight", "100").toInt,
+            (System.currentTimeMillis() / 1000L).toString
+          )
         )
-      )
     }
-    Await.ready(task, Duration.Inf)
-    src.close()
-  }
-  else {
-    println(s"Unknown mode ${sys.env("MODE")}")
+    tasks.sequence.map(_ => ExitCode.Success)
   }
 }
 
@@ -89,19 +80,13 @@ object YoutubeLogoExtractor extends Configuration {
   def apply(youtubeUrl: String,
             knownLogoTag: Option[String],
             videoInfo: VideoInfo)
-           (implicit ec:ExecutionContext)
-  : Future[Unit] = {
-    Future {
+  : IO[Unit] = {
+    IO {
       setupRun(videoInfo.runId)
       println(s"Starting to_parse the video $youtubeUrl.\n$videoInfo")
       downloadFromYoutube(youtubeUrl, videoInfo.runId)
       ReplayDetector(videoInfo.runId + ".mp4", knownLogoTag, videoInfo)
-    }.flatMap(_ => uploadToGCP(videoInfo.runId + "/" + logoFolderName, "gs://logo_detection_shots"))
-      .map{_ => println(s"Completed analysis for video $youtubeUrl")}
-      .recover {
-        case NonFatal(ex) =>
-          ex.printStackTrace()
-      }
+    }.map{_ => println(s"Completed analysis for video $youtubeUrl")}
   }
 
   def downloadFromYoutube(youtubeUrl: String, runId: String): String = {
@@ -118,24 +103,6 @@ object YoutubeLogoExtractor extends Configuration {
     val res = cmd.!
     println(res)
     youtubeUrl
-  }
-
-  def uploadToGCP(folderPath: String,
-                  bucket: String)
-                 (implicit ec: ExecutionContext)
-  : Future[Unit] = Future {
-    println(s"Uploading $folderPath to GCP")
-    import sys.process._
-    val cmd = Process("gsutil -m cp -r " + folderPath + " " + bucket)
-    val res = cmd.!
-    println(res)
-    /*
-    val process = Runtime.getRuntime.exec("gsutil -m cp -r " + folderPath + " " + bucket)
-    process.waitFor()
-    val error = scala.io.Source.fromInputStream(process.getErrorStream).mkString
-    if (error != "") println("ERROR : " + error)
-    else println("No error while uploading to GCP")
-     */
   }
 
   // ensure every folder exists, also clean the shot folder

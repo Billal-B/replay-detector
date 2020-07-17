@@ -1,6 +1,4 @@
 - README : complete HTTP request parameters, tell where logos are saved
-- Makefile : build, run, ...
-- Allows uploading files to local system
 - Allows using local videos (docker volume)
 - Run server on localhost
 - Use cats to release matrices
@@ -8,3 +6,4 @@
 - make port configurable and updates readme.md MODE: either WEBSERVER or CLI; if WEBSERVER then starts a web server on localhost at port 22022
 - disable known logo tag
 - better build.sbt
+- use http4s for the webserver
