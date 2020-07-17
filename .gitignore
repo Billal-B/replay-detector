@@ -7,9 +7,9 @@ project/target
 shot
 logs
 Dataset/*
-lib/opencv-342.jar
-lib/opencv_java342.dll
-lib/opencv_ffmpeg342_64.dll
+libs/opencv-342.jar
+libs/opencv_java342.dll
+libs/opencv_ffmpeg342_64.dll
 video.mp4
 ReplayDetector.jar
 frame
