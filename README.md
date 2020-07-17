@@ -37,3 +37,8 @@ Here is an example of a logo :
  
  ## Program output : 
  The program will create multiple folders; each folders contains frames of a logo.
+ 
+ ## Environment variables
+ - MODE: either WEBSERVER, YOUTUBE or VIDEO; if WEBSERVER then starts a web server on localhost at port 
+ 22022, if YOUTUBE then youtube url in to_parse will serve as input, if VIDEO then videos in the videos folder 
+ will be parsed

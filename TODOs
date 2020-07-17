@@ -5,3 +5,6 @@
 - Run server on localhost
 - Use cats to release matrices
 - Tests
+- make port configurable and updates readme.md MODE: either WEBSERVER or CLI; if WEBSERVER then starts a web server on localhost at port 22022
+- disable known logo tag
+- better build.sbt

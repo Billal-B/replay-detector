@@ -39,13 +39,12 @@ class ReplayDetector(capture: VideoCapture,
   println("Min logo segment length : " + minLogoSegmentLength)
 
   // for testing purpose only
-  // todo : remove/make private once testing done
   def createPlayList(
-    shotIdx: Seq[Int],
-    videoFilename: String,
-    replays: Vector[Logo] = Vector(),
-    logos: Vector[Logo] = Vector()
-  ): Unit = {
+                      shotIdx: Seq[Int],
+                      videoFilename: String,
+                      replays: Vector[Logo] = Vector(),
+                      logos: Vector[Logo] = Vector()
+                    ): Unit = {
     val playList = new File(videoFilename + "_playlist.m3u")
     playList.createNewFile()
     val bw = new BufferedWriter(new FileWriter(playList))
@@ -268,7 +267,7 @@ class ReplayDetector(capture: VideoCapture,
     */
   private def makeBackgroundFromIndex(idx: Int, nbOfBgFrame: Int): Vector[Mat] = {
     capture.set(CAP_PROP_POS_FRAMES, idx)
-    (0 until nbOfBgFrame).toVector.map{ i =>
+    (0 until nbOfBgFrame).toVector.map{ _ =>
       // read and resize
       val bgFrame = new Mat()
       capture.read(bgFrame)
@@ -330,7 +329,6 @@ class ReplayDetector(capture: VideoCapture,
   // Creates an image in the shape of a mosaic, of all the frame in a window defined by windowSize around the shot index.
   // The background frames will be substracted in every frame in the mosaic
   // backgroundFrame must be of dimension mosaicWidth * mosaicHeight
-  // todo : check the release here
   private def writeShotMosaic(runId: String, shotIdx: Int, backgroundFrames: Vector[Mat] = Vector.empty[Mat], shotFolder: String) = {
     // We want to save frames surrounding the shot transition (half of them in shot S_t and half of them in shot S_t+1 ideally)
     // The frames before the shot transition are those before the current index and the frames after the shot transition
@@ -403,5 +401,71 @@ class ReplayDetector(capture: VideoCapture,
     shiftedContours.foreach(_.release())
 
     backgroundFrames.foreach(_.release())
+  }
+}
+
+object ReplayDetector extends Configuration {
+  /**
+    * Starts the replays detection on a video
+    * @param filename The filename of the video to_parse
+    * @param knownLogoTag The logo to match in the logo DB (optional, if not specified, we don't use the logo DB)
+    */
+  def apply(filename: String,
+            knownLogoTag: Option[String] = None,
+            videoInfo: VideoInfo
+           ): Unit = {
+    knownLogoTag.foreach(t => println("Known logo : " + t))
+    val capture: VideoCapture = new VideoCapture(filename)
+    val fps: Double = capture.get(CAP_PROP_FPS)
+    val t = System.currentTimeMillis()
+
+    val shotDetector = new ShotDetector(capture, videoInfo) with Configuration
+    // shot detection
+    val shotFrames = shotDetector.findShot
+    val foundShots = shotFrames.groupBy(s => (s.toDouble / (fps /2)).round).flatMap(_._2.headOption).toVector.dropRight(1) // fixme: dropRight(1) is a hack, otherwise that loop never ends (test case youtube url : 1rWw2LkYzAQ)
+    val computeSlidingWindowsTime = System.currentTimeMillis() - t
+    println(s"Time to find shots (found ${foundShots.length}): $computeSlidingWindowsTime")
+
+    // replay detection
+    val replayDetector = new ReplayDetector(capture, videoInfo) with Configuration
+    replayDetector.saveShots(
+      videoInfo.runId,
+      foundShots.sorted,
+      videoInfo.runId + "/" + mosaicParentFolderName, // !!!! needs to be SORTED (ascending) !!!!
+      videoInfo.runId + "/" + logoFolderName) // !!!! needs to be SORTED (ascending) !!!!
+    val saveShotTime = System.currentTimeMillis() - t - computeSlidingWindowsTime
+    println("Time to save shot: " + saveShotTime)
+
+
+    val logos = knownLogoTag match {
+      case Some(tag)=> replayDetector.matchKnownLogo(videoInfo.runId, foundShots, tag)
+      case None => replayDetector.findMachingShots(videoInfo.runId, foundShots)
+    }
+
+    val computeLogoTime = System.currentTimeMillis() - saveShotTime - t
+    println("Time to find logo : " + computeLogoTime)
+
+    val replays = replayDetector.findReplay(logos)
+
+    //replayDetector.createPlayList(foundShots, filename, logos = logos)
+
+    println("Saving " + logos.map(_.index).distinct.size + " logo frames")
+
+    logos
+      .groupBy(_.tag)
+      .foreach{ case (optTag, logosForTag) =>
+        OpenCvUtils.saveFrames(capture, logosForTag.map(_.index).distinct, videoInfo.runId + "/" + logoFolderName + optTag.getOrElse("unk") + "/", videoInfo.runId, mosaicSize)
+      }
+
+    // save non logo shots
+    val distinctLogos = (logos.map(_.index) ++ logos.map(_.matches)).toSet
+    val nonLogos = scala.util.Random
+      .shuffle(shotFrames.toSet -- distinctLogos)
+      .take(distinctLogos.size)
+    OpenCvUtils.saveFrames(capture, nonLogos.toSeq, videoInfo.runId + "/" + logoFolderName + "not_logo", videoInfo.runId, mosaicSize)
+
+    println("Time total : " + (System.currentTimeMillis() - t))
+
+    capture.release()
   }
 }
